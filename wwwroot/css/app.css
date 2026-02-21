@@ -101,3 +101,20 @@ a, .btn-link {
 code {
     color: #c02d76;
 }
+
+.tool-card {
+    border: 1px solid #ddd;
+    padding: 20px;
+    border-radius: 8px;
+    width: 280px;
+}
+
+.tool-button {
+    display: inline-block;
+    margin-top: 10px;
+    padding: 8px 12px;
+    background: black;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+}

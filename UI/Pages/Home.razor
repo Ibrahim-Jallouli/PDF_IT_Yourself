@@ -1,0 +1,83 @@
+﻿@page "/"
+
+<div class="container py-4">
+    <!-- Hero -->
+    <div class="row align-items-center g-4">
+        <div class="col-lg-7">
+            <img src="logo3.png" class="img-fluid" style="max-height:100px;" alt="PDF IT Yourself" />
+
+            <p class="lead text-secondary mb-4">
+                Free, privacy-first PDF tools. 100% in your browser.
+                No upload, no tracking, no server.
+            </p>
+
+            <div class="d-flex flex-wrap gap-2">
+                <span class="badge text-bg-light border">Local processing</span>
+                <span class="badge text-bg-light border">No server</span>
+                <span class="badge text-bg-light border">No cookies</span>
+                <span class="badge text-bg-light border">No analytics</span>
+            </div>
+        </div>
+
+        <div class="col-lg-5" style="margin-top:50px;">
+            <div class="p-4 bg-light border rounded-3">
+                <h5 class="mb-2">How it works</h5>
+                <ol class="text-secondary mb-0">
+                    <li>Select a file</li>
+                    <li>Process locally</li>
+                    <li>Download the result</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <hr class="my-5" />
+
+    <!-- Tools -->
+    <div class="d-flex align-items-end justify-content-between mb-3">
+        <div>
+            <h2 class="h4 mb-1">Tools</h2>
+            <p class="text-secondary mb-0">Choose a tool to get started.</p>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-12 col-md-6 col-lg-4">
+            <ToolCard Title="PNG → PDF"
+                      Description="Convert PNG images to PDF locally."
+                      Url="/png-to-pdf"
+                      ButtonText="Open"
+                      Badge="New" />
+        </div>
+
+        <!-- Ajoute d'autres cartes ici plus tard -->
+        <div class="col-12 col-md-6 col-lg-4">
+            <ToolCard Title="Merge PDFs"
+                      Description="Combine multiple PDFs into one."
+                      Url="#"
+                      ButtonText="Coming soon"
+                      Badge="Soon" />
+        </div>
+
+        <div class="col-12 col-md-6 col-lg-4">
+            <ToolCard Title="Split PDF"
+                      Description="Extract pages from a PDF."
+                      Url="#"
+                      ButtonText="Coming soon"
+                      Badge="Soon" />
+        </div>
+    </div>
+
+    <hr class="my-5" />
+
+    <!-- Footer -->
+    <div class="text-secondary small">
+        <div class="d-flex flex-wrap gap-3">
+            <span>© @DateTime.Now.Year PDF IT Yourself</span>
+            <span>•</span>
+            <span>Privacy-first</span>
+            <span>•</span>
+            <span>Works offline (PWA)</span>
+        </div>
+    </div>
+</div>
