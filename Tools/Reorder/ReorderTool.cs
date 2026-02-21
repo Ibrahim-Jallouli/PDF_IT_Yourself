@@ -1,4 +1,4 @@
-﻿namespace PDF_IT_Yourself.UI.Tools.Reorder
+﻿namespace PDF_IT_Yourself.Tools.Reorder
 {
     public class ReorderTool
     {

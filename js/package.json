@@ -1,0 +1,19 @@
+{
+  "name": "js",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "build": "vite build",
+    "watch": "vite build --watch"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "pdf-lib": "^1.17.1"
+  },
+  "devDependencies": {
+    "vite": "^7.3.1"
+  }
+}

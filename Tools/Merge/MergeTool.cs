@@ -1,4 +1,4 @@
-﻿namespace PDF_IT_Yourself.UI.Tools.Merge
+﻿namespace PDF_IT_Yourself.Tools.Merge
 {
     public class MergeTool
     {

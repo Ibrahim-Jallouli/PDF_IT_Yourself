@@ -1,6 +1,6 @@
-﻿namespace PDF_IT_Yourself.UI.Tools.Extract
+﻿namespace PDF_IT_Yourself.Tools.Extract
 {
-    public class Extract
+    public class ExtractTool
     {
     }
 }

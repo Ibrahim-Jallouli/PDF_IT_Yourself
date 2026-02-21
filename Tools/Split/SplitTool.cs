@@ -1,4 +1,4 @@
-﻿namespace PDF_IT_Yourself.UI.Tools.Split
+﻿namespace PDF_IT_Yourself.Tools.Split
 {
     public class SplitTool
     {

@@ -1,4 +1,4 @@
-﻿namespace PDF_IT_Yourself.UI.Tools.Delete
+﻿namespace PDF_IT_Yourself.Tools.Delete
 {
     public class DeleteTool
     {
