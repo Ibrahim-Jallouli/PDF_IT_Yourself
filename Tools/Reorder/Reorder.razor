@@ -1,5 +1,148 @@
-﻿<h3>Reorder</h3>
+﻿@page "/reorder"
+@using Microsoft.AspNetCore.Components.Forms
+@inject PDF_IT_Yourself.Core.PdfDocumentLoader Loader
+@inject PDF_IT_Yourself.Tools.Reorder.ReorderTool ReorderTool
+
+<h3>Reorder Pages</h3>
+
+<div class="mb-3">
+    <label class="form-label">Choisir un PDF</label>
+    <InputFile OnChange="OnFileSelected" accept="application/pdf" />
+</div>
+
+@if (_pdfLoaded)
+{
+    <div class="mb-2 text-muted">
+        Pages détectées : @_pageCount
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Nouvel ordre des pages</label>
+        <input class="form-control"
+               placeholder="Ex: 3,1,2,4"
+               @bind="_orderInput" />
+        <div class="form-text">
+            Donne l’ordre complet des pages (1..@_pageCount), séparé par des virgules. Exemple: 3,1,2,4
+        </div>
+    </div>
+
+    <button class="btn btn-primary" @onclick="ApplyReorder" disabled="@_isBusy">
+        @(_isBusy ? "Réordonnage..." : "Réordonner & Télécharger")
+    </button>
+
+    @if (!string.IsNullOrWhiteSpace(_error))
+    {
+        <div class="alert alert-danger mt-3">@_error</div>
+    }
+}
+else
+{
+    <div class="text-muted">Charge un PDF pour commencer.</div>
+}
 
 @code {
+    private byte[]? _pdfBytes;
+    private int _pageCount;
+    private bool _pdfLoaded;
+    private bool _isBusy;
 
+    private string _orderInput = "";
+    private string _error = "";
+
+    private async Task OnFileSelected(InputFileChangeEventArgs e)
+    {
+        _error = "";
+        _pdfLoaded = false;
+        _pdfBytes = null;
+        _pageCount = 0;
+        _orderInput = "";
+
+        var file = e.File;
+        if (file is null) return;
+
+        using var stream = file.OpenReadStream(maxAllowedSize: 50 * 1024 * 1024); // 50MB
+        using var ms = new MemoryStream();
+        await stream.CopyToAsync(ms);
+        _pdfBytes = ms.ToArray();
+
+        _pageCount = await Loader.GetValidatedPageCountAsync(_pdfBytes);
+        _pdfLoaded = true;
+
+        // petit helper UX: proposer l’ordre actuel
+        _orderInput = string.Join(",", Enumerable.Range(1, _pageCount));
+    }
+
+    private async Task ApplyReorder()
+    {
+        _error = "";
+        if (_pdfBytes is null || _pageCount <= 0)
+        {
+            _error = "Aucun PDF chargé.";
+            return;
+        }
+
+        int[] order;
+        try
+        {
+            order = ParseOrder(_orderInput, _pageCount);
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+            return;
+        }
+
+        _isBusy = true;
+        try
+        {
+            await ReorderTool.ReorderAndDownloadAsync(_pdfBytes, order, "reordered.pdf");
+        }
+        catch (Exception ex)
+        {
+            _error = $"Erreur pendant le réordonnage: {ex.Message}";
+        }
+        finally
+        {
+            _isBusy = false;
+        }
+    }
+
+    private static int[] ParseOrder(string input, int pageCount)
+    {
+        if (string.IsNullOrWhiteSpace(input))
+            throw new Exception("Entre un ordre complet, ex: 3,1,2,4.");
+
+        input = input.Replace(" ", "");
+
+        var parts = input.Split(',', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length != pageCount)
+            throw new Exception($"Tu dois fournir exactement {pageCount} nombres (un par page).");
+
+        var order = new int[pageCount];
+        var seen = new bool[pageCount + 1]; // 1..pageCount
+
+        for (int i = 0; i < pageCount; i++)
+        {
+            if (!int.TryParse(parts[i], out var p))
+                throw new Exception($"Valeur invalide: '{parts[i]}'");
+
+            if (p <= 0 || p > pageCount)
+                throw new Exception($"Page hors limites (1 - {pageCount}): {p}");
+
+            if (seen[p])
+                throw new Exception($"Page dupliquée: {p}");
+
+            seen[p] = true;
+            order[i] = p;
+        }
+
+        // check missing pages
+        for (int p = 1; p <= pageCount; p++)
+        {
+            if (!seen[p])
+                throw new Exception($"Page manquante dans l’ordre: {p}");
+        }
+
+        return order;
+    }
 }

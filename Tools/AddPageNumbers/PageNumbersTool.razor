@@ -1,0 +1,130 @@
+﻿@page "/page-numbers"
+@using Microsoft.AspNetCore.Components.Forms
+@inject PDF_IT_Yourself.Core.PdfDocumentLoader Loader
+@inject PDF_IT_Yourself.Tools.PageNumbers.PageNumbersTool PageNumbers
+
+<h3>Add Page Numbers</h3>
+
+<div class="mb-3">
+    <label class="form-label">Choisir un PDF</label>
+    <InputFile OnChange="OnFileSelected" accept="application/pdf" />
+</div>
+
+@if (_pdfLoaded)
+{
+    <div class="mb-2 text-muted">
+        Pages détectées : @_pageCount
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Template</label>
+        <input class="form-control" @bind="_template" />
+        <div class="form-text">Utilise {n} et {total}. Exemple: Page {n} / {total}</div>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Position</label>
+        <select class="form-select" @bind="_position">
+            <option value="bottom-right">bottom-right</option>
+            <option value="bottom-center">bottom-center</option>
+            <option value="bottom-left">bottom-left</option>
+            <option value="top-right">top-right</option>
+            <option value="top-center">top-center</option>
+            <option value="top-left">top-left</option>
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Font size</label>
+        <input type="number" class="form-control" @bind="_fontSize" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Opacity</label>
+        <input type="number" step="0.05" class="form-control" @bind="_opacity" />
+        <div class="form-text">Valeur entre 0.05 et 1.0</div>
+    </div>
+
+    <button class="btn btn-primary" @onclick="HandleAddPageNumbersAsync" disabled="@_isBusy">
+        @(_isBusy ? "Processing..." : "Add Page Numbers & Download")
+    </button>
+
+    @if (!string.IsNullOrWhiteSpace(_error))
+    {
+        <div class="alert alert-danger mt-3">@_error</div>
+    }
+}
+else
+{
+    <div class="text-muted">Charge un PDF pour commencer.</div>
+}
+
+@code {
+    private byte[]? _pdfBytes;
+    private int _pageCount;
+    private bool _pdfLoaded;
+    private bool _isBusy;
+
+    private string _error = "";
+
+    private string _template = "Page {n} / {total}";
+    private string _position = "bottom-center";
+    private int _fontSize = 12;
+    private double _opacity = 0.9;
+
+    private async Task OnFileSelected(InputFileChangeEventArgs e)
+    {
+        _error = "";
+        _pdfLoaded = false;
+        _pdfBytes = null;
+        _pageCount = 0;
+
+        var file = e.File;
+        if (file is null) return;
+
+        using var stream = file.OpenReadStream(maxAllowedSize: 50 * 1024 * 1024);
+        using var ms = new MemoryStream();
+        await stream.CopyToAsync(ms);
+        _pdfBytes = ms.ToArray();
+
+        _pageCount = await Loader.GetValidatedPageCountAsync(_pdfBytes);
+        _pdfLoaded = true;
+    }
+
+    private async Task HandleAddPageNumbersAsync()
+    {
+        _error = "";
+
+        if (_pdfBytes is null)
+        {
+            _error = "Aucun PDF chargé.";
+            return;
+        }
+
+        if (_opacity <= 0 || _opacity > 1)
+        {
+            _error = "Opacity doit être entre 0 et 1.";
+            return;
+        }
+
+        _isBusy = true;
+        try
+        {
+            await PageNumbers.AddPageNumbersAndDownloadAsync(
+                _pdfBytes,
+                _template,
+                _position,
+                _fontSize,
+                _opacity
+            );
+        }
+        catch (Exception ex)
+        {
+            _error = $"Erreur: {ex.Message}";
+        }
+        finally
+        {
+            _isBusy = false;
+        }
+    }
+}

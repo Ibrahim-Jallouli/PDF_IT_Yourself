@@ -19,11 +19,9 @@
   <ItemGroup>
     <Folder Include="UI\Services\" />
     <Folder Include="UI\State\" />
-    <Folder Include="Interop\Dtos\" />
     <Folder Include="Tools\ConvPDFtoIMG\" />
     <Folder Include="Tools\ConvIMGtoPDF\" />
-    <Folder Include="Tools\AddWaterMark\" />
-    <Folder Include="wwwroot\js\" />
+    <Folder Include="wwwroot\dist\" />
     <Folder Include="wwwroot\interop\" />
   </ItemGroup>
 

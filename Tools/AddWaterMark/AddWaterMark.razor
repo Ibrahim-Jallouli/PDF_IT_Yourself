@@ -1,0 +1,108 @@
+﻿@page "/watermark"
+@using Microsoft.AspNetCore.Components.Forms
+@inject PDF_IT_Yourself.Core.PdfDocumentLoader Loader
+@inject PDF_IT_Yourself.Tools.Watermark.WatermarkTool WatermarkTool
+
+<h3>Add Watermark</h3>
+
+<div class="mb-3">
+    <label class="form-label">Choisir un PDF</label>
+    <InputFile OnChange="OnFileSelected" accept="application/pdf" />
+</div>
+
+@if (_pdfLoaded)
+{
+    <div class="mb-3">
+        <label class="form-label">Texte du watermark</label>
+        <input class="form-control" @bind="_text" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Taille</label>
+        <input type="number" class="form-control" @bind="_fontSize" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Opacité (0.1 - 1)</label>
+        <input type="number" step="0.05" class="form-control" @bind="_opacity" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Rotation (degrés)</label>
+        <input type="number" class="form-control" @bind="_rotation" />
+    </div>
+
+    <button class="btn btn-primary" @onclick="HandleWatermarkAsync" disabled="@_isBusy">
+        @(_isBusy ? "Processing..." : "Add Watermark & Download")
+    </button>
+
+    @if (!string.IsNullOrWhiteSpace(_error))
+    {
+        <div class="alert alert-danger mt-3">@_error</div>
+    }
+}
+else
+{
+    <div class="text-muted">Charge un PDF pour commencer.</div>
+}
+
+@code {
+    private byte[]? _pdfBytes;
+    private bool _pdfLoaded;
+    private bool _isBusy;
+    private string _error = "";
+
+    private string _text = "CONFIDENTIAL";
+    private int _fontSize = 48;
+    private double _opacity = 0.15;
+    private int _rotation = 45;
+
+    private async Task OnFileSelected(InputFileChangeEventArgs e)
+    {
+        _error = "";
+        _pdfLoaded = false;
+        _pdfBytes = null;
+
+        var file = e.File;
+        if (file is null) return;
+
+        using var stream = file.OpenReadStream(maxAllowedSize: 50 * 1024 * 1024);
+        using var ms = new MemoryStream();
+        await stream.CopyToAsync(ms);
+        _pdfBytes = ms.ToArray();
+
+        await Loader.GetValidatedPageCountAsync(_pdfBytes); // validation
+
+        _pdfLoaded = true;
+    }
+
+    private async Task HandleWatermarkAsync()
+    {
+        _error = "";
+
+        if (_pdfBytes is null)
+        {
+            _error = "Aucun PDF chargé.";
+            return;
+        }
+
+        _isBusy = true;
+        try
+        {
+            await WatermarkTool.AddWatermarkAndDownloadAsync(
+                _pdfBytes,
+                _text,
+                _fontSize,
+                _opacity,
+                _rotation);
+        }
+        catch (Exception ex)
+        {
+            _error = $"Erreur: {ex.Message}";
+        }
+        finally
+        {
+            _isBusy = false;
+        }
+    }
+}

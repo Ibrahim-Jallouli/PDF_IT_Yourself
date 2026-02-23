@@ -1,5 +1,94 @@
-﻿<h3>Merge</h3>
+﻿@page "/merge"
+@using Microsoft.AspNetCore.Components.Forms
+@inject PDF_IT_Yourself.Tools.Merge.MergeTool MergeTool
+
+<h3>Merge PDFs</h3>
+
+<div class="mb-3">
+    <label class="form-label">Choisir plusieurs PDFs</label>
+    <InputFile OnChange="OnFilesSelected" accept="application/pdf" multiple />
+    <div class="form-text">Sélectionne au moins 2 fichiers.</div>
+</div>
+
+@if (_files.Count > 0)
+{
+    <ul class="list-group mb-3">
+        @foreach (var f in _files)
+        {
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                <span>@f.Name</span>
+                <span class="text-muted">@($"{f.Size / 1024} KB")</span>
+            </li>
+        }
+    </ul>
+
+    <button class="btn btn-primary"
+            @onclick="HandleMergeAsync"
+            disabled="@(_isBusy || _files.Count < 2)">
+        @(_isBusy ? "Fusion..." : "Fusionner & Télécharger")
+    </button>
+}
+
+@if (!string.IsNullOrWhiteSpace(_error))
+{
+    <div class="alert alert-danger mt-3">@_error</div>
+}
 
 @code {
+    private readonly List<IBrowserFile> _files = new();
+    private bool _isBusy;
+    private string _error = "";
 
+    private void OnFilesSelected(InputFileChangeEventArgs e)
+    {
+        _error = "";
+        _files.Clear();
+
+        // limite côté UI (tu peux ajuster)
+        foreach (var file in e.GetMultipleFiles(30))
+        {
+            if (file.Size > 50 * 1024 * 1024)
+            {
+                _error = $"Fichier trop grand: {file.Name} (max 50MB).";
+                _files.Clear();
+                return;
+            }
+            _files.Add(file);
+        }
+    }
+
+    private async Task HandleMergeAsync()
+    {
+        _error = "";
+
+        if (_files.Count < 2)
+        {
+            _error = "Choisis au moins 2 fichiers PDF.";
+            return;
+        }
+
+        _isBusy = true;
+        try
+        {
+            var pdfsBytes = new List<byte[]>(_files.Count);
+
+            foreach (var file in _files)
+            {
+                using var stream = file.OpenReadStream(maxAllowedSize: 50 * 1024 * 1024);
+                using var ms = new MemoryStream();
+                await stream.CopyToAsync(ms);
+                pdfsBytes.Add(ms.ToArray());
+            }
+
+            await MergeTool.MergeAndDownloadAsync(pdfsBytes, "merged.pdf");
+        }
+        catch (Exception ex)
+        {
+            _error = $"Erreur: {ex.Message}";
+        }
+        finally
+        {
+            _isBusy = false;
+        }
+    }
 }
