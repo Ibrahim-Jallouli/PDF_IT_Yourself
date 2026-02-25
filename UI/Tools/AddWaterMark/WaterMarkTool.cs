@@ -1,4 +1,4 @@
-﻿using PDF_IT_Yourself.Core;
+﻿using PDF_IT_Yourself.Services;
 using PDF_IT_Yourself.Interop;
 
 namespace PDF_IT_Yourself.Tools.Watermark

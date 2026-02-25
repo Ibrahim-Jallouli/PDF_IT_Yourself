@@ -19,10 +19,9 @@
   <ItemGroup>
     <Folder Include="UI\Services\" />
     <Folder Include="UI\State\" />
-    <Folder Include="Tools\ConvPDFtoIMG\" />
-    <Folder Include="Tools\ConvIMGtoPDF\" />
+    <Folder Include="UI\Tools\ConvPDFtoIMG\" />
+    <Folder Include="UI\Tools\ConvIMGtoPDF\" />
     <Folder Include="wwwroot\dist\" />
-    <Folder Include="wwwroot\interop\" />
   </ItemGroup>
 
 </Project>

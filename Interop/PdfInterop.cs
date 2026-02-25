@@ -50,6 +50,43 @@ namespace PDF_IT_Yourself.Interop
         public ValueTask DownloadBytesAsync(string filename, byte[] bytes, string mimeType = "application/pdf")
             => _js.InvokeVoidAsync("PdfTools.downloadBytes", filename, bytes, mimeType);
 
+        public ValueTask<IJSObjectReference> LoadPdfAsync(
+         byte[] pdfBytes,
+         CancellationToken cancellationToken = default)
+         => _js.InvokeAsync<IJSObjectReference>(
+             "PdfTools.loadPdf",
+             cancellationToken,
+             pdfBytes);
+
+        public ValueTask<string> RenderPageToObjectUrlAsync(
+            IJSObjectReference pdf,
+            int pageIndex0Based,
+            double scale = 0.25,
+            string mime = "image/png",
+            double quality = 0.92,
+            CancellationToken cancellationToken = default)
+        {
+            return _js.InvokeAsync<string>(
+                "PdfTools.renderPageToObjectUrl",
+                cancellationToken,
+                pdf,
+                pageIndex0Based,
+                new { scale, mime, quality }
+            );
+        }
+
+        public ValueTask RevokeObjectUrlAsync(string url, CancellationToken cancellationToken = default)
+        {
+            return _js.InvokeVoidAsync("PdfTools.revokeObjectUrl", cancellationToken, url);
+        }
+
+        public ValueTask DestroyPdfAsync(
+            IJSObjectReference pdf,
+            CancellationToken cancellationToken = default)
+            => _js.InvokeVoidAsync(
+                "PdfTools.destroyPdf",
+                cancellationToken,
+                pdf);
         // -------------------------
         // DTOs sent to JS
         // -------------------------

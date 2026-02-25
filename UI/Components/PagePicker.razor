@@ -1,5 +1,235 @@
-﻿<h3>PagePicker</h3>
+﻿@using PDF_IT_Yourself.Services
+@inject PagePickerTool PagePickerTool
+@implements IAsyncDisposable
+
+@if (!string.IsNullOrWhiteSpace(Error))
+{
+    <div class="alert alert-danger">@Error</div>
+}
+
+@if (!HasPdf)
+{
+    <div class="text-muted">No PDF loaded.</div>
+    return;
+}
+
+@if (_loading)
+{
+    <div class="text-muted">Generating thumbnails… (@_loaded/@PageCount)</div>
+}
+
+<div class="d-grid" style="grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap:12px;">
+    @for (int i = 0; i < PageCount; i++)
+    {
+        int index = i;
+        bool isSelected = _selected0Based.Contains(index);
+
+        <button type="button"
+                class="page-tile @(isSelected ? "is-selected" : "")"
+                @onclick="() => Toggle(index)"
+                aria-pressed="@isSelected"
+                disabled="@(IsBusy)">
+
+            <div class="thumb-frame">
+                @if (_thumbs.TryGetValue(index, out var url) && !string.IsNullOrWhiteSpace(url))
+                {
+                    <img class="thumb-img" src="@url" alt="Page @(index + 1) thumbnail" loading="lazy" />
+                }
+                else
+                {
+                    <div class="thumb-skeleton" aria-hidden="true"></div>
+                }
+
+                @if (isSelected)
+                {
+                    <div class="thumb-overlay" aria-hidden="true"></div>
+                    <div class="check-badge" aria-hidden="true">✓</div>
+                }
+            </div>
+
+            <div class="page-label">Page @(index + 1)</div>
+        </button>
+    }
+</div>
 
 @code {
+    [Parameter] public byte[]? PdfBytes { get; set; }
+    [Parameter] public int PageCount { get; set; }
+    [Parameter] public double Scale { get; set; } = 0.25;
 
+    [Parameter] public int[] SelectedPages1Based { get; set; } = Array.Empty<int>();
+    [Parameter] public EventCallback<int[]> SelectedPages1BasedChanged { get; set; }
+
+    [Parameter] public bool IsBusy { get; set; }
+    [Parameter] public string? Error { get; set; }
+
+
+    // ------- state -------
+    private readonly Dictionary<int, string> _thumbs = new();
+    private readonly HashSet<int> _selected0Based = new();
+
+    private bool _loading;
+    private int _loaded;
+
+    private string _lastSelectionKey = "";
+    private string? _pdfKey; // remplace ReferenceEquals
+
+    private CancellationTokenSource? _thumbCts;
+    private bool _generationInProgress;
+
+    // ------- tuning -------
+    private const int MaxConcurrency = 4; // 3–6 selon device
+    private const int RefreshEvery = 6;   // refresh UI tous les N thumbs
+
+    private bool HasPdf => PdfBytes is { Length: > 0 } && PageCount > 0;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        SyncSelectionFromParent();
+
+        if (!HasPdf)
+            return;
+
+        var newKey = ComputePdfKey(PdfBytes!, PageCount, Scale);
+
+        // si rien n'a changé et que tout est déjà prêt, ne rien faire
+        if (_pdfKey == newKey)
+            return; // PDF identique => ne touche pas à la génération en cours
+
+        _pdfKey = newKey;
+        await RestartGenerationAsync();
+    }
+
+    private void SyncSelectionFromParent()
+    {
+        var selectionKey = string.Join(",", SelectedPages1Based ?? Array.Empty<int>());
+        if (selectionKey == _lastSelectionKey)
+            return;
+
+        _lastSelectionKey = selectionKey;
+
+        _selected0Based.Clear();
+        foreach (var p1 in SelectedPages1Based ?? Array.Empty<int>())
+        {
+            if (p1 > 0) _selected0Based.Add(p1 - 1);
+        }
+    }
+
+    private async Task RestartGenerationAsync()
+    {
+        CancelGeneration();
+
+        await ClearThumbsAsync();
+
+        _thumbCts = new CancellationTokenSource();
+        var ct = _thumbCts.Token;
+
+        _loaded = 0;
+        _loading = true;
+        await InvokeAsync(StateHasChanged);
+
+        try
+        {
+            await GenerateThumbnailsAsync(ct);
+        }
+        catch (OperationCanceledException)
+        {
+            // normal (nouveau pdf / paramètres)
+        }
+        finally
+        {
+            _loading = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private void CancelGeneration()
+    {
+        _thumbCts?.Cancel();
+        _thumbCts?.Dispose();
+        _thumbCts = null;
+    }
+
+    private async Task GenerateThumbnailsAsync(CancellationToken ct)
+    {
+        if (_generationInProgress)
+            return;
+
+        _generationInProgress = true;
+
+        try
+        {
+            // problème 1: PDF déjà chargé côté JS (handle caché)
+            await PagePickerTool.EnsureLoadedAsync(PdfBytes!, ct);
+
+            using var gate = new SemaphoreSlim(MaxConcurrency);
+            int completed = 0;
+
+            var tasks = Enumerable.Range(0, PageCount).Select(async pageIndex =>
+            {
+                await gate.WaitAsync(ct);
+                try
+                {
+                    // rendu thumbnail
+                    var url = await PagePickerTool.GetThumbnailObjectUrlAsync(PdfBytes!, pageIndex, Scale, ct);
+
+                    // MAJ UI/state sur le bon contexte
+                    await InvokeAsync(() =>
+                    {
+                        _thumbs[pageIndex] = url;
+                        _loaded = Interlocked.Increment(ref completed);
+                    });
+
+                    if (_loaded % RefreshEvery == 0 || _loaded == PageCount)
+                        await InvokeAsync(StateHasChanged);
+                }
+                finally
+                {
+                    gate.Release();
+                }
+            });
+
+            await Task.WhenAll(tasks);
+        }
+        finally
+        {
+            _generationInProgress = false;
+        }
+    }
+
+    private static string ComputePdfKey(byte[] bytes, int pageCount, double scale)
+    {
+        // clé rapide et suffisamment robuste (évite ReferenceEquals)
+        int len = bytes.Length;
+        uint head = len >= 4 ? BitConverter.ToUInt32(bytes, 0) : 0;
+        uint tail = len >= 4 ? BitConverter.ToUInt32(bytes, len - 4) : 0;
+        return $"{len}:{head}:{tail}:{pageCount}:{scale}";
+    }
+
+    private async Task Toggle(int index0)
+    {
+        if (_selected0Based.Contains(index0)) _selected0Based.Remove(index0);
+        else _selected0Based.Add(index0);
+
+        var selected1Based = _selected0Based.OrderBy(i => i).Select(i => i + 1).ToArray();
+        await SelectedPages1BasedChanged.InvokeAsync(selected1Based);
+    }
+
+    private async Task ClearThumbsAsync()
+    {
+        foreach (var url in _thumbs.Values)
+        {
+            if (!string.IsNullOrWhiteSpace(url) && url.StartsWith("blob:"))
+            {
+                try { await PagePickerTool.RevokeObjectUrlAsync(url); } catch { }
+            }
+        }
+        _thumbs.Clear();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        CancelGeneration();
+        await ClearThumbsAsync();
+    }
 }

@@ -1,7 +1,7 @@
 ﻿using PDF_IT_Yourself.Interop;
 using System.Collections;
 
-namespace PDF_IT_Yourself.Core
+namespace PDF_IT_Yourself.Services
 {
     public sealed class PdfPageOperations
     {

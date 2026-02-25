@@ -1,4 +1,5 @@
 import { PDFDocument, rgb, degrees, StandardFonts } from "pdf-lib";
+import { loadPdf, destroyPdf, renderPageToObjectUrl, revokeObjectUrl } from "./page-picker.js";
 
 /* ------------------------
    Helpers
@@ -284,7 +285,9 @@ function downloadBytes(filename, bytes, mimeType = "application/pdf") {
 /* ------------------------
    Export to window
 ------------------------- */
-window.PdfTools = {
+window.PdfTools = window.PdfTools || {};
+
+Object.assign(window.PdfTools, {
     getPageCount,
     extractPages,
     mergePdfs,
@@ -294,4 +297,9 @@ window.PdfTools = {
     addTextWatermark,
     addPageNumbers,
     downloadBytes,
-};
+
+    loadPdf,
+    renderPageToObjectUrl,
+    revokeObjectUrl,
+    destroyPdf,
+});

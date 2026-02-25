@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using PDF_IT_Yourself;
-using PDF_IT_Yourself.Core;
+using PDF_IT_Yourself.Services;
 using PDF_IT_Yourself.Interop;
 using PDF_IT_Yourself.Tools.Delete;
 using PDF_IT_Yourself.Tools.Extract;
@@ -19,6 +19,8 @@ builder.Services.AddScoped<PdfInterop>();
 builder.Services.AddScoped<PdfDocumentLoader>();
 builder.Services.AddScoped<PdfPageOperations>();
 builder.Services.AddScoped<PdfExport>();
+builder.Services.AddScoped<PagePickerTool>();
+
 
 builder.Services.AddScoped<ExtractTool>();
 builder.Services.AddScoped<DeleteTool>();
