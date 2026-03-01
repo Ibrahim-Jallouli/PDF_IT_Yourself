@@ -41,7 +41,6 @@ export async function renderPageToObjectUrl(pdf, pageIndex0, options = {}) {
     page.cleanup?.();
 
     const blob = await new Promise((resolve, reject) => {
-        // PNG ignore quality; JPEG/WebP uses it
         canvas.toBlob(
             b => (b ? resolve(b) : reject(new Error("toBlob returned null"))),
             mime,

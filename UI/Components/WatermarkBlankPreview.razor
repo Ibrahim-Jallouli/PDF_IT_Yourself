@@ -1,0 +1,63 @@
+﻿<div class="blank-preview">
+    <div class="blank-page">
+        <div class="wm-overlay" style="@OverlayStyle">@TextToShow</div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public string Text { get; set; } = "WATERMARK";
+    [Parameter] public int FontSize { get; set; } = 48;
+    [Parameter] public double Opacity { get; set; } = 0.15;
+    [Parameter] public string ColorHex { get; set; } = "#333333";
+
+    private string TextToShow => string.IsNullOrWhiteSpace(Text) ? "WATERMARK" : Text;
+
+    private string OverlayStyle => BuildOverlayStyle(FontSize, Opacity, ColorHex);
+
+    private static string BuildOverlayStyle(int fontSize, double opacity, string colorHex)
+    {
+        fontSize = Math.Clamp(fontSize - 12, 8, 200);
+        opacity = Math.Clamp(opacity, 0.05, 1.0);
+
+        var s = new System.Text.StringBuilder();
+        s.Append("position:absolute;");
+        s.Append("left:50%;top:50%;");
+        s.Append("transform:translate(-50%,-50%) ");
+        s.Append("rotate(-45deg);"); // hardcoded rotation
+        s.Append("transform-origin:center;");
+        s.Append("pointer-events:none;");
+        s.Append("text-align:center;");
+        s.Append("white-space:nowrap;");
+
+        s.Append($"font-size:{fontSize}px;");
+        s.Append($"opacity:{opacity:0.##};");
+
+        s.Append($"color:{NormalizeHex(colorHex)};");
+        s.Append("font-weight:700;");
+        s.Append("user-select:none;");
+
+        s.Append("max-width:90%;");
+        s.Append("text-overflow:ellipsis;");
+        s.Append("overflow:hidden;");
+
+        return s.ToString();
+    }
+
+    private static string NormalizeHex(string? hex)
+    {
+        if (string.IsNullOrWhiteSpace(hex)) return "#333333";
+        hex = hex.Trim();
+
+        if (!hex.StartsWith("#")) hex = "#" + hex;
+
+        if (hex.Length == 4)
+        {
+            var r = hex[1];
+            var g = hex[2];
+            var b = hex[3];
+            return $"#{r}{r}{g}{g}{b}{b}";
+        }
+
+        return hex.Length == 7 ? hex : "#333333";
+    }
+}

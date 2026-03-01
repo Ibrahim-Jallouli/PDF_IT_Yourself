@@ -17,10 +17,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="UI\Services\" />
-    <Folder Include="UI\State\" />
-    <Folder Include="UI\Tools\ConvPDFtoIMG\" />
-    <Folder Include="UI\Tools\ConvIMGtoPDF\" />
     <Folder Include="wwwroot\dist\" />
   </ItemGroup>
 

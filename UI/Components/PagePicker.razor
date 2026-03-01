@@ -72,14 +72,14 @@
     private int _loaded;
 
     private string _lastSelectionKey = "";
-    private string? _pdfKey; // remplace ReferenceEquals
+    private string? _pdfKey; 
 
     private CancellationTokenSource? _thumbCts;
     private bool _generationInProgress;
 
     // ------- tuning -------
-    private const int MaxConcurrency = 4; // 3–6 selon device
-    private const int RefreshEvery = 6;   // refresh UI tous les N thumbs
+    private const int MaxConcurrency = 4; 
+    private const int RefreshEvery = 6;   
 
     private bool HasPdf => PdfBytes is { Length: > 0 } && PageCount > 0;
 
@@ -92,9 +92,8 @@
 
         var newKey = ComputePdfKey(PdfBytes!, PageCount, Scale);
 
-        // si rien n'a changé et que tout est déjà prêt, ne rien faire
         if (_pdfKey == newKey)
-            return; // PDF identique => ne touche pas à la génération en cours
+            return; 
 
         _pdfKey = newKey;
         await RestartGenerationAsync();
@@ -134,7 +133,6 @@
         }
         catch (OperationCanceledException)
         {
-            // normal (nouveau pdf / paramètres)
         }
         finally
         {
@@ -159,7 +157,6 @@
 
         try
         {
-            // problème 1: PDF déjà chargé côté JS (handle caché)
             await PagePickerTool.EnsureLoadedAsync(PdfBytes!, ct);
 
             using var gate = new SemaphoreSlim(MaxConcurrency);
@@ -173,7 +170,6 @@
                     // rendu thumbnail
                     var url = await PagePickerTool.GetThumbnailObjectUrlAsync(PdfBytes!, pageIndex, Scale, ct);
 
-                    // MAJ UI/state sur le bon contexte
                     await InvokeAsync(() =>
                     {
                         _thumbs[pageIndex] = url;
@@ -199,7 +195,6 @@
 
     private static string ComputePdfKey(byte[] bytes, int pageCount, double scale)
     {
-        // clé rapide et suffisamment robuste (évite ReferenceEquals)
         int len = bytes.Length;
         uint head = len >= 4 ? BitConverter.ToUInt32(bytes, 0) : 0;
         uint tail = len >= 4 ? BitConverter.ToUInt32(bytes, len - 4) : 0;

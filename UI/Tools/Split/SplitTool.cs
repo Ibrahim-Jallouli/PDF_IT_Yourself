@@ -20,7 +20,6 @@ namespace PDF_IT_Yourself.Tools.Split
         {
             var parts = await _ops.SplitByRangesAsync(pdfBytes, ranges1Based);
 
-            // Télécharge chaque fichier séparément
             for (int i = 0; i < parts.Length; i++)
             {
                 var name = $"{baseFilename}_part{i + 1}.pdf";

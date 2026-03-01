@@ -12,6 +12,7 @@
   "description": "",
   "dependencies": {
     "pdf-lib": "^1.17.1",
+    "pdfcpu-wasm": "^0.1.0",
     "pdfjs-dist": "^5.4.624"
   },
   "devDependencies": {

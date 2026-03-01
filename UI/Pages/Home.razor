@@ -1,125 +1,167 @@
 ﻿@page "/"
 
-<div class="container py-4">
-    <!-- Hero -->
-    <div class="row align-items-center g-4">
-        <div class="col-lg-7">
-            <img src="/img/logo3.png" class="img-fluid" style="max-height:100px;" alt="PDF IT Yourself" />
+<div class="app-bg">
+    <div class="container py-4">
+        <section class="home-hero py-4">
+            <div class="row align-items-center g-4">
 
-            <p class="lead text-secondary mb-4">
-                Free, privacy-first PDF tools. 100% in your browser.
-                No upload, no tracking, no server.
-            </p>
+                <!-- LEFT -->
+                <div class="col-lg-8 order-1 order-lg-1">
 
-            <div class="d-flex flex-wrap gap-2">
-                <span class="badge text-bg-light border">Local processing</span>
-                <span class="badge text-bg-light border">No server</span>
-                <span class="badge text-bg-light border">No cookies</span>
-                <span class="badge text-bg-light border">No analytics</span>
+                    <div class="home-eyebrow">Privacy-first • 100% Local Processing</div>
+
+                    <h1 class="home-title mt-2">
+                        PDF IT <span class="home-accent">Yourself</span>
+                    </h1>
+
+                    <p class="home-subtitle lead mb-4">
+                        Free, privacy-first PDF tools. 100% in your browser. No upload, no tracking, no server.
+                    </p>
+
+                    <div class="d-flex flex-wrap gap-2 mb-4 home-badges">
+                        <span class="badge">Local processing</span>
+                        <span class="badge">No server</span>
+                        <span class="badge">No cookies</span>
+                        <span class="badge">No analytics</span>
+                    </div>
+
+                    <header class="home-tools-head mt-4">
+                        <h2 class="home-tools-title mb-1">Tools</h2>
+                        <p class="text-secondary mb-0">
+                            Choose a tool to get started — everything runs locally.
+                        </p>
+                    </header>
+
+                </div>
+
+                <!-- RIGHT -->
+                <div class="col-lg-4 order-2 order-lg-2">
+                    <div class="hero-card p-4">
+
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <h6 class="fw-bold mb-0">How it works</h6>
+                            <span class="home-step-badge">3 steps</span>
+                        </div>
+
+                        <div class="step-item">
+                            <div class="step-circle">1</div>
+                            <div>
+                                <div class="fw-semibold">Select a file</div>
+                                <div class="text-secondary small">Choose your PDF or images</div>
+                            </div>
+                        </div>
+
+                        <div class="step-item">
+                            <div class="step-circle">2</div>
+                            <div>
+                                <div class="fw-semibold">Process locally</div>
+                                <div class="text-secondary small">Everything stays in your browser</div>
+                            </div>
+                        </div>
+
+                        <div class="step-item mb-0">
+                            <div class="step-circle">3</div>
+                            <div>
+                                <div class="fw-semibold">Download result</div>
+                                <div class="text-secondary small">Export instantly, no upload</div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <div class="tools-page py-1" style="background-color:transparent;">
+            <div>
+                <!-- Grid -->
+                <div class="row g-4">
+                    <div class="col-12 col-md-6 col-lg-4">
+                        <ToolCard Title="PNG → PDF"
+                                  Description="Convert PNG images to PDF locally."
+                                  Url="/png-to-pdf"
+                                  ButtonText="Open"
+                                  Badge="Popular"
+                                  Icon="bi bi-image" />
+                    </div>
+
+                    <div class="col-12 col-md-6 col-lg-4">
+                        <ToolCard Title="Merge PDFs"
+                                  Description="Combine multiple PDFs into one."
+                                  Url="/merge"
+                                  ButtonText="Open"
+                                  Badge="Popular"
+                                  Icon="bi bi-layers" />
+                    </div>
+
+                    <div class="col-12 col-md-6 col-lg-4">
+                        <ToolCard Title="Extract pages"
+                                  Description="Extract selected pages from a PDF."
+                                  Url="/extract"
+                                  ButtonText="Open"
+                                  Badge="Popular"
+                                  Icon="bi bi-box-arrow-up-right" />
+                    </div>
+
+
+                    <div class="col-12 col-md-6 col-lg-4">
+                        <ToolCard Title="Delete pages"
+                                  Description="Remove specific pages from a PDF."
+                                  Url="/delete"
+                                  ButtonText="Open"
+                                  Badge="Popular"
+                                  Icon="bi bi-trash3" />
+                    </div>
+
+                    <div class="col-12 col-md-6 col-lg-4">
+                        <ToolCard Title="Split PDF"
+                                  Description="Split a PDF by ranges into multiple PDFs."
+                                  Url="/split"
+                                  ButtonText="Open"
+                                  Badge="New"
+                                  Icon="bi bi-scissors" />
+                    </div>
+
+                    <div class="col-12 col-md-6 col-lg-4">
+                        <ToolCard Title="Reorder pages"
+                                  Description="Change the order of pages in a PDF."
+                                  Url="/reorder"
+                                  ButtonText="Open"
+                                  Badge="Beta"
+                                  Icon="bi bi-arrow-down-up" />
+                    </div>
+
+                    <div class="col-12 col-md-6 col-lg-4">
+                        <ToolCard Title="Add watermark"
+                                  Description="Add a text watermark to all pages."
+                                  Url="/watermark"
+                                  ButtonText="Open"
+                                  Badge="New"
+                                  Icon="bi bi-droplet" />
+                    </div>
+
+                    <div class="col-12 col-md-6 col-lg-4">
+                        <ToolCard Title="Page numbers"
+                                  Description="Add page numbers to your PDF."
+                                  Url="/page-numbers"
+                                  ButtonText="Open"
+                                  Badge="New"
+                                  Icon="bi bi-123" />
+                    </div>
+
+                    <div class="col-12 col-md-6 col-lg-4">
+                        <ToolCard Title="Compression"
+                                  Description="Compress PDFs locally."
+                                  Url="/compression"
+                                  ButtonText="Open"
+                                  Badge="Beta"
+                                  Icon="bi bi-arrows-collapse" />
+                    </div>
+                </div>
+
             </div>
         </div>
-
-        <div class="col-lg-5" style="margin-top:50px;">
-            <div class="p-4 bg-light border rounded-3">
-                <h5 class="mb-2">How it works</h5>
-                <ol class="text-secondary mb-0">
-                    <li>Select a file</li>
-                    <li>Process locally</li>
-                    <li>Download the result</li>
-                </ol>
-            </div>
-        </div>
-    </div>
-
-    <hr class="my-5" />
-
-    <!-- Tools -->
-    <div class="d-flex align-items-end justify-content-between mb-3">
-        <div>
-            <h2 class="h4 mb-1">Tools</h2>
-            <p class="text-secondary mb-0">Choose a tool to get started.</p>
-        </div>
-    </div>
-
-    <div class="row g-4">
-        <!-- Image tools -->
-        <div class="col-12 col-md-6 col-lg-4">
-            <ToolCard Title="PNG → PDF"
-                      Description="Convert PNG images to PDF locally."
-                      Url="/png-to-pdf"
-                      ButtonText="Open"
-                      Badge="New" />
-        </div>
-
-        <!-- PDF core tools -->
-        <div class="col-12 col-md-6 col-lg-4">
-            <ToolCard Title="Merge PDFs"
-                      Description="Combine multiple PDFs into one."
-                      Url="/merge"
-                      ButtonText="Open"
-                      Badge="New" />
-        </div>
-
-        <div class="col-12 col-md-6 col-lg-4">
-            <ToolCard Title="Split PDF"
-                      Description="Split a PDF by ranges into multiple PDFs."
-                      Url="/split"
-                      ButtonText="Open"
-                      Badge="New" />
-        </div>
-
-        <div class="col-12 col-md-6 col-lg-4">
-            <ToolCard Title="Extract pages"
-                      Description="Extract selected pages from a PDF."
-                      Url="/extract"
-                      ButtonText="Open"
-                      Badge="New" />
-        </div>
-
-        <div class="col-12 col-md-6 col-lg-4">
-            <ToolCard Title="Delete pages"
-                      Description="Remove specific pages from a PDF."
-                      Url="/delete"
-                      ButtonText="Open"
-                      Badge="New" />
-        </div>
-
-        <div class="col-12 col-md-6 col-lg-4">
-            <ToolCard Title="Reorder pages"
-                      Description="Change the order of pages in a PDF."
-                      Url="/reorder"
-                      ButtonText="Open"
-                      Badge="New" />
-        </div>
-
-        <!-- Edit tools -->
-        <div class="col-12 col-md-6 col-lg-4">
-            <ToolCard Title="Add watermark"
-                      Description="Add a text watermark to all pages."
-                      Url="/watermark"
-                      ButtonText="Open"
-                      Badge="New" />
-        </div>
-
-        <div class="col-12 col-md-6 col-lg-4">
-            <ToolCard Title="Page numbers"
-                      Description="Add page numbers to your PDF."
-                      Url="/page-numbers"
-                      ButtonText="Open"
-                      Badge="New" />
-        </div>
-    </div>
-
-    <hr class="my-5" />
-
-    <!-- Footer -->
-    <div class="text-secondary small">
-        <div class="d-flex flex-wrap gap-3">
-            <span>© @DateTime.Now.Year PDF IT Yourself</span>
-            <span>•</span>
-            <span>Privacy-first</span>
-            <span>•</span>
-            <span>Works offline (PWA)</span>
-        </div>
+        <hr class="my-5" />
     </div>
 </div>

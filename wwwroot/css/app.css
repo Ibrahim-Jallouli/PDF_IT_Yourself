@@ -1,3 +1,21 @@
+/* ==========================================================================
+   app.css
+   Structure:
+   1) Base / Typography
+   2) Links & Buttons (Bootstrap overrides)
+   3) Forms & Validation
+   4) Layout helpers
+   5) Blazor system UI (error + loading)
+   6) Components (Tool card, PagePicker, Tiles, Navbar, etc.)
+   7) Pages (FAQ, etc.)
+   8) Global backgrounds / reusable surfaces
+   ========================================================================== */
+
+
+/* ==========================================================================
+   1) Base / Typography
+   ========================================================================== */
+
 html, body {
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
@@ -5,6 +23,15 @@ html, body {
 h1:focus {
     outline: none;
 }
+
+code {
+    color: #c02d76;
+}
+
+
+/* ==========================================================================
+   2) Links & Buttons (Bootstrap overrides)
+   ========================================================================== */
 
 a, .btn-link {
     color: #0071c1;
@@ -16,13 +43,26 @@ a, .btn-link {
     border-color: #1861ac;
 }
 
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+/* Focus ring */
+.btn:focus,
+.btn:active:focus,
+.btn-link.nav-link:focus,
+.form-control:focus,
+.form-check-input:focus {
+    box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
 }
 
-.content {
-    padding-top: 1.1rem;
+/* Custom focus ring cleanup (keyboard users) */
+.install-btn:focus,
+.install-btn:active {
+    outline: none !important;
+    box-shadow: none !important;
 }
+
+
+/* ==========================================================================
+   3) Forms & Validation
+   ========================================================================== */
 
 .valid.modified:not([type=checkbox]) {
     outline: 1px solid #26b050;
@@ -35,6 +75,20 @@ a, .btn-link {
 .validation-message {
     color: red;
 }
+
+
+/* ==========================================================================
+   4) Layout helpers
+   ========================================================================== */
+
+.content {
+    padding-top: 1.1rem;
+}
+
+
+/* ==========================================================================
+   5) Blazor system UI (error + loading)
+   ========================================================================== */
 
 #blazor-error-ui {
     background: lightyellow;
@@ -62,9 +116,10 @@ a, .btn-link {
 }
 
     .blazor-error-boundary::after {
-        content: "An error has occurred."
+        content: "An error has occurred.";
     }
 
+/* Loading progress */
 .loading-progress {
     position: relative;
     display: block;
@@ -98,29 +153,112 @@ a, .btn-link {
         content: var(--blazor-load-percentage-text, "Loading");
     }
 
-code {
-    color: #c02d76;
+
+/* ==========================================================================
+   6) Components
+   ========================================================================== */
+
+/* ==========================================================================
+   ToolCard - Modern Premium Version
+   ========================================================================== */
+
+.toolcard {
+    background: #ffffff;
+    border: 1px solid #e9ecef;
+    border-radius: 18px;
+    transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+    will-change: transform;
 }
 
-.tool-card {
-    border: 1px solid #ddd;
-    padding: 20px;
-    border-radius: 8px;
-    width: 280px;
+    .toolcard:hover {
+        transform: translateY(-3px);
+        border-color: rgba(13,110,253,.35);
+        box-shadow: 0 14px 34px rgba(0,0,0,.08);
+    }
+
+    .toolcard .card-body {
+        padding: 20px;
+    }
+
+/* Icon box */
+.toolcard-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 14px;
+    background: #f8f9fa;
+    border: 1px solid #eef1f4;
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    transition: background-color .18s ease, border-color .18s ease, transform .18s ease;
 }
 
-.tool-button {
-    display: inline-block;
-    margin-top: 10px;
-    padding: 8px 12px;
-    background: black;
-    color: white;
-    text-decoration: none;
-    border-radius: 4px;
+    .toolcard-icon .bi {
+        font-size: 20px;
+        color: #0d6efd;
+    }
+
+.toolcard:hover .toolcard-icon {
+    background: rgba(13,110,253,.08);
+    border-color: rgba(13,110,253,.25);
+    transform: scale(1.05);
 }
 
-/* wwwroot/css/app.css */
+/* Title & description */
+.toolcard .card-title {
+    font-weight: 700;
+    letter-spacing: -0.015em;
+    line-height: 1.2;
+}
 
+.toolcard .card-text {
+    line-height: 1.5;
+    font-size: .95rem;
+    color: #6c757d;
+}
+
+/* Badge */
+.toolcard-badge {
+    background: #f8f9fa !important;
+    color: #495057 !important;
+    border: 1px solid #e9ecef !important;
+    font-weight: 600;
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 999px;
+}
+
+/* Buttons */
+.toolcard .btn {
+    border-radius: 12px;
+    font-weight: 600;
+    transition: transform .12s ease, box-shadow .12s ease, filter .12s ease;
+}
+
+.toolcard .btn-primary {
+    box-shadow: 0 4px 12px rgba(13,110,253,.20);
+}
+
+.toolcard .btn:hover {
+    transform: translateY(-1px);
+    filter: brightness(.98);
+    box-shadow: 0 8px 18px rgba(0,0,0,.10);
+}
+
+.toolcard .btn:focus {
+    box-shadow: 0 0 0 .2rem rgba(13,110,253,.25);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .toolcard,
+    .toolcard *,
+    .toolcard:hover {
+        transition: none !important;
+        transform: none !important;
+    }
+}
+
+/* --- PagePicker Grid --- */
 .pagepicker-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
@@ -184,8 +322,7 @@ code {
         border-color: rgba(13,110,253,1);
     }
 
-
-/* --- Tile --- */
+/* --- Page Tile --- */
 .page-tile {
     width: 100%;
     text-align: left;
@@ -203,7 +340,7 @@ code {
     }
 
     .page-tile:focus-visible {
-        outline: 3px solid rgba(13,110,253,.35); /* proche bootstrap primary */
+        outline: 3px solid rgba(13,110,253,.35);
         outline-offset: 2px;
     }
 
@@ -212,7 +349,7 @@ code {
         cursor: not-allowed;
     }
 
-/* --- Thumb frame with fixed aspect ratio --- */
+/* Thumb frame */
 .thumb-frame {
     position: relative;
     width: 100%;
@@ -222,15 +359,14 @@ code {
     background: #f4f4f4;
 }
 
-/* Image always fits the same box */
 .thumb-img {
     width: 100%;
     height: 100%;
     display: block;
-    object-fit: cover; /* ou contain si tu préfères voir toute la page */
+    object-fit: cover;
 }
 
-/* Placeholder */
+/* Placeholder shimmer */
 .thumb-skeleton {
     width: 100%;
     height: 100%;
@@ -249,7 +385,7 @@ code {
     }
 }
 
-/* --- Selected state --- */
+/* Selected state */
 .page-tile.is-selected {
     border-color: var(--bs-primary, #0d6efd);
 }
@@ -257,7 +393,7 @@ code {
 .thumb-overlay {
     position: absolute;
     inset: 0;
-    background: rgba(13,110,253,.12); /* voile léger */
+    background: rgba(13,110,253,.12);
 }
 
 .check-badge {
@@ -276,14 +412,13 @@ code {
     box-shadow: 0 6px 16px rgba(0,0,0,.18);
 }
 
-/* Label */
 .page-label {
     margin-top: 8px;
     font-size: .85rem;
     color: var(--bs-secondary-color, #6c757d);
 }
 
-/* Pdf preview */
+/* --- PDF Preview / Cover card --- */
 .cover-card {
     border: 2px solid var(--bs-border-color, #ddd);
     border-radius: 10px;
@@ -303,3 +438,538 @@ code {
     display: grid;
     gap: 2px;
 }
+
+/* --- Navbar tweaks --- */
+.navbar-brand img {
+    transition: opacity 0.2s ease;
+}
+
+.navbar-brand:hover img {
+    opacity: 0.8;
+}
+
+.navbar .bi {
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+    .navbar .bi:hover {
+        transform: translateY(-2px);
+        opacity: 0.75;
+    }
+
+@media (min-width: 992px) {
+    .navbar .dropdown:hover .dropdown-menu {
+        display: block;
+        margin-top: 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .accordion-button, .accordion-button::after {
+        transition: none !important;
+    }
+}
+
+
+/* ==========================================================================
+   8) Global backgrounds / reusable surfaces
+   ========================================================================== */
+
+.app-bg {
+    min-height: 100vh;
+    width: 100%;
+    background: linear-gradient(180deg, #ffffff 0%, #F2F6F7 100%);
+}
+
+/* Glass card reusable */
+.glass-card {
+    background: rgba(255,255,255,0.75);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,.65);
+    border-radius: 1rem;
+}
+
+
+/* ==========================================================================
+   Hero Card - Clean & Minimal (used on Home)
+   ========================================================================== */
+
+.hero-card {
+    border: 1px solid rgba(0,0,0,.08);
+    border-radius: 18px;
+    background: rgba(255,255,255,.75);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 16px 45px rgba(0,0,0,.06);
+}
+
+/* Steps (used on Home) */
+.step-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 0;
+}
+
+    .step-item + .step-item {
+        border-top: 1px solid #f1f3f5;
+        padding-top: 12px;
+    }
+
+.step-circle {
+    flex: 0 0 auto;
+    width: 34px;
+    height: 34px;
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    font-weight: 800;
+    font-size: 14px;
+    color: #0d6efd;
+    background: rgba(13,110,253,.10);
+    border: 1px solid rgba(13,110,253,.22);
+    box-shadow: 0 10px 20px rgba(13,110,253,.10);
+}
+
+
+/* ==========================================================================
+   7) Pages
+   ========================================================================== */
+
+/* --- FAQ page --- */
+.faq-page {
+    min-height: 100vh;
+    background: linear-gradient(180deg, #ffffff 0%, #f5f7fa 100%);
+}
+
+    .faq-page .faq-hero {
+        background: transparent;
+    }
+
+    .faq-page .faq-card {
+        border-radius: 1rem;
+        overflow: hidden;
+        background: rgba(255,255,255,.75);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255,255,255,.65);
+    }
+
+        .faq-page .faq-card .accordion-item {
+            transition: transform .12s ease, box-shadow .12s ease;
+        }
+
+            .faq-page .faq-card .accordion-item:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 10px 24px rgba(0,0,0,.06);
+            }
+
+    .faq-page .accordion-button {
+        font-weight: 600;
+        transition: transform .12s ease, background-color .12s ease;
+    }
+
+        .faq-page .accordion-button:hover {
+            transform: translateY(-1px);
+            background-color: rgba(13,110,253,.04);
+        }
+
+        .faq-page .accordion-button::after {
+            transition: transform .18s ease;
+        }
+
+    .faq-page .accordion-body {
+        color: rgba(33,37,41,.85);
+        line-height: 1.6;
+    }
+
+
+/* ---- Delete Page ---- */
+
+.card-surface {
+    background: #fff;
+    border: 1px solid rgba(0,0,0,.08);
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,.06);
+    padding: 16px;
+}
+
+@media (min-width: 992px) {
+    .card-surface {
+        padding: 20px;
+    }
+
+    /* Sticky left panel on desktop */
+    .tool-left {
+        position: sticky;
+        top: 20px;
+    }
+}
+
+.section-title {
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+/* Dropzone */
+.dropzone-wrap {
+    display: block;
+}
+
+.dropzone {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    padding: 14px 14px;
+    border-radius: 14px;
+    border: 1.5px dashed rgba(0,0,0,.22);
+    background: rgba(0,0,0,.02);
+    cursor: pointer;
+    transition: transform .08s ease, border-color .12s ease, background .12s ease, box-shadow .12s ease;
+    user-select: none;
+}
+
+    .dropzone:hover {
+        border-color: rgba(13,110,253,.55);
+        background: rgba(13,110,253,.04);
+        box-shadow: 0 6px 18px rgba(13,110,253,.10);
+    }
+
+    .dropzone.is-dragover {
+        border-color: rgba(13,110,253,.9);
+        background: rgba(13,110,253,.08);
+        box-shadow: 0 10px 24px rgba(13,110,253,.18);
+        transform: translateY(-1px);
+    }
+
+.dz-icon {
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    border-radius: 12px;
+    background: rgba(13,110,253,.10);
+    font-size: 22px;
+}
+
+.dz-text {
+    min-width: 0;
+}
+
+.dz-input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.file-pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(0,0,0,.08);
+    background: rgba(25,135,84,.06);
+}
+
+/* Meta */
+.meta-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.meta-item {
+    border: 1px solid rgba(0,0,0,.08);
+    background: rgba(0,0,0,.02);
+    border-radius: 14px;
+    padding: 10px 12px;
+}
+
+.meta-label {
+    font-size: 12px;
+    color: rgba(0,0,0,.55);
+}
+
+.meta-value {
+    font-weight: 800;
+    font-size: 18px;
+    line-height: 1.2;
+    margin-top: 2px;
+}
+
+/* Selected pages box */
+.selected-box {
+    border: 1px solid rgba(0,0,0,.08);
+    background: rgba(0,0,0,.02);
+    border-radius: 14px;
+    padding: 10px 12px;
+}
+
+.selected-list {
+    max-height: 86px;
+    overflow: auto;
+    padding-right: 4px;
+    font-weight: 600;
+}
+
+/* Preview area */
+.preview-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.preview-scroll {
+    max-height: min(70vh, 680px);
+    overflow: auto;
+    border-radius: 14px;
+    border: 1px solid rgba(0,0,0,.08);
+    background: rgba(0,0,0,.015);
+    padding: 10px;
+    scrollbar-gutter: stable;
+}
+
+@media (min-width: 992px) {
+    .preview-scroll {
+        max-height: calc(100vh - 250px);
+    }
+}
+
+.preview-footer {
+    margin-top: 10px;
+}
+
+.empty-preview {
+    border: 1px dashed rgba(0,0,0,.18);
+    border-radius: 14px;
+    padding: 18px;
+    background: rgba(0,0,0,.02);
+}
+
+.empty-left {
+    border: 1px dashed rgba(0,0,0,.18);
+    border-radius: 14px;
+    padding: 12px;
+    background: rgba(0,0,0,.02);
+}
+
+.blank-preview {
+    display: flex;
+    justify-content: center;
+    padding: 10px;
+}
+
+.blank-page {
+    position: relative;
+    width: min(360px, 100%);
+    aspect-ratio: 210 / 297;
+    background: #fff;
+    border-radius: 14px;
+    border: 1px solid rgba(0,0,0,.08);
+    box-shadow: 0 10px 24px rgba(0,0,0,.06);
+}
+
+    .blank-page::before {
+        content: "";
+        position: absolute;
+        inset: 12px;
+        border: 1px dashed rgba(0,0,0,.08);
+        border-radius: 10px;
+        pointer-events: none;
+    }
+
+    .blank-page .overlay {
+        z-index: 2;
+    }
+
+.pn-overlay {
+    position: absolute;
+}
+
+.blank-page .pn-overlay {
+    z-index: 2;
+}
+
+.blank-page .wm-overlay {
+    z-index: 2;
+}
+
+.home-hero {
+    border-radius: 22px;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+/* Small label */
+.home-eyebrow {
+    display: inline-block;
+    font-size: .82rem;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: rgba(0,0,0,.55);
+    background: rgba(13,110,253,.06);
+    border: 1px solid rgba(13,110,253,.12);
+    padding: .35rem .6rem;
+    border-radius: 999px;
+}
+
+/* Title */
+.home-title {
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.05;
+    font-size: clamp(2.2rem, 3.2vw, 3.2rem);
+    margin-bottom: .75rem;
+}
+
+.home-accent {
+    color: #3A8B36;
+    position: relative;
+}
+
+    .home-accent::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        bottom: .12em;
+        width: 100%;
+        height: .35em;
+        background: rgba(13,110,253,.18);
+        border-radius: 10px;
+        z-index: -1;
+    }
+
+/* Subtitle */
+.home-subtitle {
+    color: rgba(0,0,0,.68);
+}
+
+/* Badges */
+.home-badges .badge {
+    background: rgba(0,0,0,.03);
+    border: 1px solid rgba(0,0,0,.08);
+    color: rgba(0,0,0,.7);
+    border-radius: 999px;
+    padding: .45rem .75rem;
+    font-weight: 600;
+}
+
+/* Tools section head */
+.home-tools-head {
+    padding-top: 16px;
+    border-top: 1px solid rgba(0,0,0,.08);
+    max-width: 62ch;
+}
+
+.home-tools-title {
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+
+/* Step badge */
+.home-step-badge {
+    font-size: .75rem;
+    padding: .3rem .6rem;
+    border-radius: 999px;
+    background: rgba(13,110,253,.08);
+    border: 1px solid rgba(13,110,253,.18);
+    color: #0d6efd;
+    font-weight: 700;
+}
+
+
+/* ===== Result UI (right side) ===== */
+.result-wrap {
+    padding: 1.25rem;
+}
+
+.result-row {
+    display: flex;
+    gap: 1.25rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.donut {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    position: relative;
+    background: conic-gradient(var(--c) calc(var(--p) * 1%), #e9ecef 0);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+    .donut::after {
+        content: "";
+        width: 116px;
+        height: 116px;
+        background: white;
+        border-radius: 50%;
+        position: absolute;
+        box-shadow: inset 0 0 0 1px rgba(0,0,0,.06);
+    }
+
+.donut-center {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    line-height: 1.1;
+}
+
+.donut-big {
+    font-weight: 800;
+    font-size: 30px;
+}
+
+.stats-grid {
+    margin-top: 1rem;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.stat {
+    border: 1px solid rgba(0,0,0,.06);
+    border-radius: 12px;
+    padding: 12px;
+}
+
+.stat-label {
+    font-size: 12px;
+    color: #6c757d;
+}
+
+.stat-value {
+    font-weight: 700;
+    margin-top: 4px;
+}
+
+@media (max-width: 576px) {
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+
+
+
+/*footer*/
+.footer-gradient {
+    background: linear-gradient(180deg, #F2F6F7 0%, #C0C8CF 250%);
+}
+
+.footer-link {
+    text-decoration: none;
+    color: #6c757d;
+    transition: color 0.2s ease;
+}
+
+    .footer-link:hover {
+        color: #000;
+    }

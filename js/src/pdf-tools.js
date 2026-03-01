@@ -1,5 +1,6 @@
 import { PDFDocument, rgb, degrees, StandardFonts } from "pdf-lib";
 import { loadPdf, destroyPdf, renderPageToObjectUrl, revokeObjectUrl } from "./page-picker.js";
+import { Pdfcpu } from "pdfcpu-wasm";
 
 /* ------------------------
    Helpers
@@ -25,6 +26,49 @@ async function getPageCount(pdfBytes) {
     return doc.getPageCount();
 }
 
+
+
+let _pdfcpu = null;
+
+function getPdfcpu() {
+    if (!_pdfcpu) _pdfcpu = new Pdfcpu();
+    return _pdfcpu;
+}
+
+/* ------------------------
+   COMPRESS (LOSSLESS)
+------------------------- */
+function toBool(v) {
+    if (typeof v === "boolean") return v;
+    if (typeof v === "number") return v !== 0;
+    if (typeof v === "string") return v.toLowerCase() === "true" || v === "1";
+    return false;
+}
+
+async function compressPdfLossless(pdfRaw, options = {}) {
+    const pdfBytes = toUint8Array(pdfRaw, "compressPdfLossless");
+    assertPdfBytes(pdfBytes, "compressPdfLossless");
+
+    const statsRaw = (options?.stats ?? options?.Stats ?? false);
+    const stats = toBool(statsRaw);
+
+    const pdfcpu = getPdfcpu();
+    const inFile = new File([pdfBytes], "in.pdf", { type: "application/pdf" });
+
+    const args = ["optimize"];
+    if (stats) args.push("-stats", "/output/stats.csv");
+    args.push("/input/in.pdf", "/output/out.pdf");
+
+    const outDirHandle = await pdfcpu.run(args, [inFile]);
+
+    const outFile = await outDirHandle.readFile("/out.pdf", "application/pdf");
+    if (!outFile) throw new Error("compressPdfLossless: output file not produced.");
+
+    const outBytes = new Uint8Array(await outFile.arrayBuffer());
+    assertPdfBytes(outBytes, "compressPdfLossless(out)");
+
+    return outBytes;
+}
 /* ------------------------
    ExtractPages 
 ------------------------- */
@@ -160,6 +204,7 @@ async function splitByRanges(pdfBytes, ranges) {
     return outputs; 
 }
 
+
 /* ------------------------
    WATERMARK
 ------------------------- */
@@ -167,16 +212,15 @@ async function addTextWatermark(pdfBytes, options = {}) {
     assertPdfBytes(pdfBytes, "addTextWatermark");
 
     const {
-        text = "CONFIDENTIAL",
+        text = "WATERMARK",
         fontSize = 48,
         opacity = 0.15,
-        rotationDegrees = 45,
-        // couleur gris foncé
-        color = { r: 0.2, g: 0.2, b: 0.2 },
-        // "center" | "diagonal" (diagonal = center + rotation)
         placement = "diagonal",
+        offsetX = 0,
+        offsetY = 0
     } = options;
 
+    const colorResolved = options.color ?? options.Color ?? { r: 0.2, g: 0.2, b: 0.2 };
     const pdfDoc = await PDFDocument.load(pdfBytes);
     const font = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
@@ -184,27 +228,25 @@ async function addTextWatermark(pdfBytes, options = {}) {
     for (const page of pages) {
         const { width, height } = page.getSize();
 
-        // on centre le watermark
         const textWidth = font.widthOfTextAtSize(text, fontSize);
-        const x = (width - textWidth) / 2 + 50;
-        const y = height / 2 -100;
+        const x = (width - textWidth) / 2 + 50 + offsetX;
+        const y = height / 2 - 100 + offsetY;
 
-        const rotate = placement === "diagonal" ? degrees(rotationDegrees) : degrees(0);
+        const rotate = placement === "diagonal" ? degrees(45) : degrees(0);
 
         page.drawText(text, {
             x,
             y,
             size: fontSize,
             font,
-            color: rgb(color.r, color.g, color.b),
+            color: rgb(colorResolved.r, colorResolved.g, colorResolved.b), 
             rotate,
-            opacity,
+            opacity
         });
     }
 
-    return await pdfDoc.save(); 
+    return await pdfDoc.save();
 }
-
 /* ------------------------
    ADD PAGE NUMBERS
 ------------------------- */
@@ -218,11 +260,9 @@ async function addPageNumbers(pdfBytes, options = {}) {
         color = { r: 0, g: 0, b: 0 },
         marginX = 40,
         marginY = 25,
-        // "bottom-right" | "bottom-center" | "bottom-left" | "top-right" | ...
         position = "bottom-right",
-        // template support: {n} {total}
         template = "{n}/{total}",
-        startAt = 1, // utile si tu veux commencer à 1 (default)
+        startAt = 1, 
     } = options;
 
     const pdfDoc = await PDFDocument.load(pdfBytes);
@@ -283,6 +323,78 @@ function downloadBytes(filename, bytes, mimeType = "application/pdf") {
 }
 
 /* ------------------------
+   IMAGE TO PDF (single)
+------------------------- */
+
+async function imageToPdf(imageRaw, options = {}) {
+    const {
+        page = "fit",
+        a4 = { width: 595.28, height: 841.89 },
+        margin = 0,
+        fit = "contain",
+        filename = null,
+    } = options;
+
+    if (Array.isArray(imageRaw)) {
+        throw new Error("imageToPdf: expected a single image (bytes), received an array.");
+    }
+
+    const bytes = toUint8Array(imageRaw, "imageToPdf");
+    if (!bytes || bytes.length === 0) throw new Error("imageToPdf: empty image.");
+
+    const pdfDoc = await PDFDocument.create();
+
+    const lower = (filename || "").toLowerCase();
+    const isPngByName = lower.endsWith(".png");
+
+    let embedded;
+    try {
+        embedded = isPngByName ? await pdfDoc.embedPng(bytes) : await pdfDoc.embedJpg(bytes);
+    } catch {
+        try {
+            embedded = isPngByName ? await pdfDoc.embedJpg(bytes) : await pdfDoc.embedPng(bytes);
+        } catch {
+            throw new Error("imageToPdf: unsupported image format (only JPG/PNG).");
+        }
+    }
+
+    const imgW = embedded.width;
+    const imgH = embedded.height;
+
+    // Page size
+    let pageW, pageH;
+    if (page === "A4") {
+        pageW = a4.width;
+        pageH = a4.height;
+    } else if (page === "original") {
+        pageW = imgW + margin * 2;
+        pageH = imgH + margin * 2;
+    } else {
+        pageW = imgW + margin * 2;
+        pageH = imgH + margin * 2;
+    }
+
+    const p = pdfDoc.addPage([pageW, pageH]);
+
+    const availW = pageW - margin * 2;
+    const availH = pageH - margin * 2;
+
+    const scaleContain = Math.min(availW / imgW, availH / imgH);
+    const scaleCover = Math.max(availW / imgW, availH / imgH);
+    const scale = (fit === "cover") ? scaleCover : scaleContain;
+
+    const drawW = imgW * scale;
+    const drawH = imgH * scale;
+
+    const x = margin + (availW - drawW) / 2;
+    const y = margin + (availH - drawH) / 2;
+
+    p.drawImage(embedded, { x, y, width: drawW, height: drawH });
+
+    return await pdfDoc.save();
+}
+
+/* ------------------------
    Export to window
 ------------------------- */
 window.PdfTools = window.PdfTools || {};
@@ -296,10 +408,11 @@ Object.assign(window.PdfTools, {
     splitByRanges,
     addTextWatermark,
     addPageNumbers,
+    compressPdfLossless,  
     downloadBytes,
-
     loadPdf,
     renderPageToObjectUrl,
     revokeObjectUrl,
     destroyPdf,
+    imageToPdf,
 });

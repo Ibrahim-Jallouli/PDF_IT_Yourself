@@ -1,60 +1,258 @@
 ﻿@page "/merge"
 @using Microsoft.AspNetCore.Components.Forms
 @inject PDF_IT_Yourself.Tools.Merge.MergeTool MergeTool
+@inject IJSRuntime JS
+<div class="app-bg">
 
-<h3>Merge PDFs</h3>
+    <div class="container py-4 ">
+        <div class="tool-header mb-4">
+            <div>
+                <h1 class="h3 fw-bold mb-1">Merge PDFs</h1>
+                <div class="text-secondary">Merge multiple PDFs in order — 100% local, no upload.</div>
+            </div>
+        </div>
 
-<div class="mb-3">
-    <label class="form-label">Choisir plusieurs PDFs</label>
-    <InputFile OnChange="OnFilesSelected" accept="application/pdf" multiple />
-    <div class="form-text">Sélectionne au moins 2 fichiers.</div>
+        <div class="row g-4 align-items-start">
+            <!-- LEFT -->
+            <div class="col-12 col-lg-4">
+                <div class="card-surface tool-left">
+
+                    <div class="section-title">1) Choose PDFs</div>
+
+                    <!-- Dropzone -->
+                    <div class="dropzone-wrap mb-3">
+                        <label class="dropzone dropzone-merge @( _dragOver ? "is-dragover" : "" )"
+                               @ondragenter="OnDragEnter"
+                               @ondragleave="OnDragLeave"
+                               @ondragover="OnDragOver"
+                               @ondragover:preventDefault
+                               @ondrop="OnDrop"
+                               @ondrop:preventDefault>
+
+                            <div class="dz-icon">📄</div>
+                            <div class="dz-text">
+                                <div class="fw-semibold"> Select your PDFs here</div>
+                                <div class="text-secondary small">or click to select (PDF, max 50MB, up to 30 files)</div>
+                            </div>
+
+                            <InputFile id="pdfInput"
+                                       class="dz-input"
+                                       OnChange="OnFilesSelected"
+                                       accept="application/pdf"
+                                       multiple />
+                        </label>
+
+                        @if (_files.Count > 0)
+                        {
+                            <div class="file-pill mt-2">
+                                <span class="me-2">✅</span>
+                                <span class="text-truncate">@($"{_files.Count} file(s) selected")</span>
+                            </div>
+                        }
+                    </div>
+
+                    <!-- Info -->
+                    <div class="section-title">Info</div>
+
+                    @if (_files.Count > 0)
+                    {
+                        <div class="meta-grid mb-3">
+                            <div class="meta-item">
+                                <div class="meta-label">Files</div>
+                                <div class="meta-value">@_files.Count</div>
+                            </div>
+                            <div class="meta-item">
+                                <div class="meta-label">Total size</div>
+                                <div class="meta-value">@FormatBytes(_totalBytes)</div>
+                            </div>
+                        </div>
+
+                        <div class="actions">
+                            <button class="btn btn-primary w-100"
+                                    @onclick="HandleMergeAsync"
+                                    disabled="@(_isBusy || _files.Count < 2)">
+                                @(_isBusy ? "Merging..." : "Merge & Download")
+                            </button>
+
+                            <div class="hint text-secondary small mt-2">
+                                Tip: use ↑ ↓ to change the order before merging.
+                            </div>
+                        </div>
+
+                        @if (_files.Count < 2)
+                        {
+                            <div class="text-secondary small mt-2">
+                                Select at least 2 files.
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="empty-left text-secondary small">
+                            Add at least 2 PDFs to enable merging.
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrWhiteSpace(_error))
+                    {
+                        <div class="alert alert-danger mt-3 mb-0">@_error</div>
+                    }
+                </div>
+            </div>
+
+            <!-- RIGHT -->
+            <div class="col-12 col-lg-8">
+                <div class="card-surface">
+
+                    <div class="preview-header">
+                        <div class="section-title mb-0">2) File order</div>
+                    </div>
+
+                    @if (_files.Count > 0)
+                    {
+                        <div class="preview-scroll">
+                            <div class="list-group">
+                                @for (int i = 0; i < _files.Count; i++)
+                                {
+                                    var index = i;
+                                    var f = _files[index];
+
+                                    <div class="list-group-item d-flex align-items-center justify-content-between gap-3">
+                                        <div class="d-flex align-items-center gap-3 flex-grow-1" style="min-width:0;">
+                                            <div class="text-secondary small" style="width: 2rem; flex: 0 0 auto;">
+                                                @(index + 1).
+                                            </div>
+
+                                            <div class="flex-grow-1" style="min-width:0;">
+                                                <div class="fw-semibold text-truncate">@f.Name</div>
+                                                <div class="text-secondary small">@FormatBytes(f.Size)</div>
+                                            </div>
+                                        </div>
+
+                                        <div class="d-flex align-items-center gap-2" style="flex: 0 0 auto;">
+                                            <button type="button"
+                                                    class="btn btn-outline-secondary btn-sm"
+                                                    title="Move up"
+                                                    @onclick="() => MoveUp(index)"
+                                                    disabled="@(_isBusy || index == 0)">
+                                                ↑
+                                            </button>
+
+                                            <button type="button"
+                                                    class="btn btn-outline-secondary btn-sm"
+                                                    title="Move down"
+                                                    @onclick="() => MoveDown(index)"
+                                                    disabled="@(_isBusy || index == _files.Count - 1)">
+                                                ↓
+                                            </button>
+
+                                            <button type="button"
+                                                    class="btn btn-outline-danger btn-sm"
+                                                    title="Remove"
+                                                    @onclick="() => RemoveAt(index)"
+                                                    disabled="@_isBusy">
+                                                ✕
+                                            </button>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="empty-preview text-secondary">
+                            The file list will appear here after selection.
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+    </div>
 </div>
-
-@if (_files.Count > 0)
-{
-    <ul class="list-group mb-3">
-        @foreach (var f in _files)
-        {
-            <li class="list-group-item d-flex justify-content-between align-items-center">
-                <span>@f.Name</span>
-                <span class="text-muted">@($"{f.Size / 1024} KB")</span>
-            </li>
-        }
-    </ul>
-
-    <button class="btn btn-primary"
-            @onclick="HandleMergeAsync"
-            disabled="@(_isBusy || _files.Count < 2)">
-        @(_isBusy ? "Fusion..." : "Fusionner & Télécharger")
-    </button>
-}
-
-@if (!string.IsNullOrWhiteSpace(_error))
-{
-    <div class="alert alert-danger mt-3">@_error</div>
-}
-
 @code {
-    private readonly List<IBrowserFile> _files = new();
+    // On stocke des bytes (robuste, zéro _blazorFilesById)
+    private sealed class FileItem
+    {
+        public string Name { get; set; } = "";
+        public long Size { get; set; }
+        public byte[] Bytes { get; set; } = Array.Empty<byte>();
+    }
+
+    private readonly List<FileItem> _files = new();
     private bool _isBusy;
     private string _error = "";
+    private long _totalBytes;
 
-    private void OnFilesSelected(InputFileChangeEventArgs e)
+    // UI
+    private bool _dragOver;
+
+    private void OnDragEnter(DragEventArgs e) => _dragOver = true;
+    private void OnDragOver(DragEventArgs e) => _dragOver = true;
+    private void OnDragLeave(DragEventArgs e) => _dragOver = false;
+
+    private async Task OnDrop(DragEventArgs e)
+    {
+        // Ici on ne “drop” pas réellement les fichiers (pour éviter les bugs Blazor)
+        // On ouvre juste l’explorateur de fichiers.
+        _dragOver = false;
+        await JS.InvokeVoidAsync("pdfDrop.openPicker", "pdfInput");
+    }
+
+    private async Task OnFilesSelected(InputFileChangeEventArgs e)
     {
         _error = "";
-        _files.Clear();
 
-        // limite côté UI (tu peux ajuster)
-        foreach (var file in e.GetMultipleFiles(30))
+        try
         {
-            if (file.Size > 50 * 1024 * 1024)
+            foreach (var file in e.GetMultipleFiles(30))
             {
-                _error = $"Fichier trop grand: {file.Name} (max 50MB).";
-                _files.Clear();
-                return;
+                if (file.Size > 50 * 1024 * 1024)
+                {
+                    _error = $"Fichier trop grand: {file.Name} (max 50MB).";
+                    return;
+                }
+                var exists = _files.Any(x => x.Name == file.Name && x.Size == (long)file.Size);
+                if (exists) continue;
+
+                using var stream = file.OpenReadStream(maxAllowedSize: 50 * 1024 * 1024);
+                using var ms = new MemoryStream();
+                await stream.CopyToAsync(ms);
+
+                _files.Add(new FileItem
+                {
+                    Name = file.Name,
+                    Size = (long)file.Size,
+                    Bytes = ms.ToArray()
+                });
+
+                _totalBytes += (long)file.Size;
             }
-            _files.Add(file);
         }
+        catch (Exception ex)
+        {
+            _error = $"Erreur sélection fichiers : {ex.Message}";
+        }
+    }
+
+    private void RemoveAt(int index)
+    {
+        if (index < 0 || index >= _files.Count) return;
+        _totalBytes -= _files[index].Size;
+        _files.RemoveAt(index);
+    }
+
+    private void MoveUp(int index)
+    {
+        if (index <= 0 || index >= _files.Count) return;
+        (_files[index - 1], _files[index]) = (_files[index], _files[index - 1]);
+    }
+
+    private void MoveDown(int index)
+    {
+        if (index < 0 || index >= _files.Count - 1) return;
+        (_files[index + 1], _files[index]) = (_files[index], _files[index + 1]);
     }
 
     private async Task HandleMergeAsync()
@@ -70,16 +268,7 @@
         _isBusy = true;
         try
         {
-            var pdfsBytes = new List<byte[]>(_files.Count);
-
-            foreach (var file in _files)
-            {
-                using var stream = file.OpenReadStream(maxAllowedSize: 50 * 1024 * 1024);
-                using var ms = new MemoryStream();
-                await stream.CopyToAsync(ms);
-                pdfsBytes.Add(ms.ToArray());
-            }
-
+            var pdfsBytes = _files.Select(f => f.Bytes).ToList();
             await MergeTool.MergeAndDownloadAsync(pdfsBytes, "merged.pdf");
         }
         catch (Exception ex)
@@ -90,5 +279,13 @@
         {
             _isBusy = false;
         }
+    }
+
+    private static string FormatBytes(long bytes)
+    {
+        if (bytes < 1024) return $"{bytes} B";
+        if (bytes < 1024 * 1024) return $"{bytes / 1024d:0.#} KB";
+        if (bytes < 1024 * 1024 * 1024) return $"{bytes / (1024d * 1024d):0.#} MB";
+        return $"{bytes / (1024d * 1024d * 1024d):0.#} GB";
     }
 }

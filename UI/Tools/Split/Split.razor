@@ -3,42 +3,144 @@
 @using PDF_IT_Yourself.Services
 @inject PDF_IT_Yourself.Services.PdfDocumentLoader Loader
 @inject PDF_IT_Yourself.Tools.Split.SplitTool SplitTool
+@inject IJSRuntime JS
+<div class="app-bg">
+    <div class="container py-4 ">
 
-<h3>Split PDF</h3>
-
-<div class="mb-3">
-    <label class="form-label">Choisir un PDF</label>
-    <InputFile OnChange="OnFileSelected" accept="application/pdf" />
-</div>
-
-@if (_pdfLoaded)
-{
-    <div class="mb-2 text-muted">
-        Pages détectées : @_pageCount
-    </div>
-
-    <div class="mb-3">
-        <label class="form-label">Plages (ranges) à extraire en plusieurs PDFs</label>
-        <input class="form-control" placeholder="Ex: 1-3, 4-6, 10-12" @bind="_rangesInput" />
-        <div class="form-text">
-            Format: plages séparées par virgules. Exemple: 1-3, 4-6, 10-12
+        <!-- Header -->
+        <div class="tool-header mb-4">
+            <div>
+                <h1 class="h3 fw-bold mb-1">Split PDF</h1>
+                <div class="text-secondary">Split a PDF into multiple files using page ranges — 100% local, no upload.</div>
+            </div>
         </div>
+
+        <div class="row g-4 align-items-start">
+            <!-- LEFT -->
+            <div class="col-12 col-lg-4">
+                <div class="card-surface tool-left">
+
+                    <div class="section-title">1) Choose a PDF</div>
+
+                    <!-- Dropzone -->
+                    <div class="dropzone-wrap mb-3">
+                        <label class="dropzone dropzone-split @( _dragOver ? "is-dragover" : "" )"
+                               @ondragenter="OnDragEnter"
+                               @ondragleave="OnDragLeave"
+                               @ondragover="OnDragOver"
+                               @ondragover:preventDefault
+                               @ondrop="OnDrop"
+                               @ondrop:preventDefault>
+
+                            <div class="dz-icon">📄</div>
+                            <div class="dz-text">
+                                <div class="fw-semibold">Drag & drop your PDF here</div>
+                                <div class="text-secondary small">or click to select (PDF, max 50MB)</div>
+                            </div>
+
+                            <InputFile id="pdfInput"
+                                       class="dz-input"
+                                       OnChange="OnFileSelected"
+                                       accept="application/pdf" />
+                        </label>
+
+                        @if (_pdfLoaded)
+                        {
+                            <div class="file-pill mt-2">
+                                <span class="me-2">✅</span>
+                                <span class="text-truncate">@(_fileName ?? "PDF loaded")</span>
+                            </div>
+                        }
+                    </div>
+
+                    <!-- Info / Ranges -->
+                    <div class="section-title">Info</div>
+
+                    @if (_pdfLoaded)
+                    {
+                        <div class="meta-grid mb-3">
+                            <div class="meta-item">
+                                <div class="meta-label">Pages detected</div>
+                                <div class="meta-value">@_pageCount</div>
+                            </div>
+                            <div class="meta-item">
+                                <div class="meta-label">Segments</div>
+                                <div class="meta-value">@_rangeCount</div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label mb-1">Page ranges (multiple PDFs)</label>
+                            <input class="form-control"
+                                   placeholder="Example: 1-3, 4-6, 10-12"
+                                   @bind="_rangesInput"
+                                   @bind:event="oninput"
+                                   disabled="@_isBusy" />
+                            <div class="form-text">
+                                Format: ranges separated by commas. Example: 1-3, 4-6, 10-12
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="actions">
+                            <button class="btn btn-primary w-100"
+                                    @onclick="HandleSplitAsync"
+                                    disabled="@(_isBusy || string.IsNullOrWhiteSpace(_rangesInput))">
+                                @(_isBusy ? "Splitting..." : "Split & Download")
+                            </button>
+
+                            <div class="hint text-secondary small mt-2">
+                                Tip: you can reverse a range (e.g., 6-4) — it will be normalized automatically.
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="empty-left text-secondary small">
+                            Upload a PDF to enable preview and splitting.
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrWhiteSpace(_error))
+                    {
+                        <div class="alert alert-danger mt-3 mb-0">@_error</div>
+                    }
+                </div>
+            </div>
+
+            <!-- RIGHT -->
+            <div class="col-12 col-lg-8">
+                <div class="card-surface">
+
+                    <div class="preview-header">
+                        <div class="section-title mb-0">2) Preview</div>
+                    </div>
+
+                    @if (_pdfLoaded)
+                    {
+                        <div class="preview-scroll">
+                            <!-- Simple preview: no selection here,
+                                 split is controlled by the ranges -->
+                            <PagePicker @key="_pickerKey"
+                                        PdfBytes="_pdfBytes"
+                                        PageCount="_pageCount"
+                                        IsBusy="true"
+                                        SelectedPages1Based="Array.Empty<int>()"
+                                        SelectedPages1BasedChanged="OnNoopSelectedPagesChanged" />
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="empty-preview text-secondary">
+                            The page preview will appear here after upload.
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
     </div>
-
-    <button class="btn btn-primary" @onclick="HandleSplitAsync" disabled="@_isBusy">
-        @(_isBusy ? "Split..." : "Split & Télécharger")
-    </button>
-
-    @if (!string.IsNullOrWhiteSpace(_error))
-    {
-        <div class="alert alert-danger mt-3">@_error</div>
-    }
-}
-else
-{
-    <div class="text-muted">Charge un PDF pour commencer.</div>
-}
-
+</div>
 @code {
     private byte[]? _pdfBytes;
     private int _pageCount;
@@ -48,24 +150,66 @@ else
     private string _rangesInput = "";
     private string _error = "";
 
+    private string _pickerKey = Guid.NewGuid().ToString("N");
+
+    // UI
+    private bool _dragOver;
+    private string? _fileName;
+
+    // UI (info ranges)
+    private int _rangeCount;
+    private string _rangesPreview = "";
+
+    private void OnDragEnter(DragEventArgs e) => _dragOver = true;
+    private void OnDragOver(DragEventArgs e) => _dragOver = true;
+    private void OnDragLeave(DragEventArgs e) => _dragOver = false;
+
+    private void OnDrop(DragEventArgs e)
+    {
+        _dragOver = false;
+        StateHasChanged();
+    }
+
     private async Task OnFileSelected(InputFileChangeEventArgs e)
     {
         _error = "";
         _pdfLoaded = false;
+        _isBusy = false;
+
         _pdfBytes = null;
         _pageCount = 0;
         _rangesInput = "";
+        _fileName = null;
+
+        _rangeCount = 0;
+        _rangesPreview = "";
+
+        _pickerKey = Guid.NewGuid().ToString("N");
 
         var file = e.File;
         if (file is null) return;
 
-        using var stream = file.OpenReadStream(maxAllowedSize: 50 * 1024 * 1024); // 50MB
-        using var ms = new MemoryStream();
-        await stream.CopyToAsync(ms);
-        _pdfBytes = ms.ToArray();
+        try
+        {
+            _fileName = file.Name;
 
-        _pageCount = await Loader.GetValidatedPageCountAsync(_pdfBytes);
-        _pdfLoaded = true;
+            using var stream = file.OpenReadStream(maxAllowedSize: 50 * 1024 * 1024); // 50MB
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+            _pdfBytes = ms.ToArray();
+
+            _pageCount = await Loader.GetValidatedPageCountAsync(_pdfBytes);
+            _pdfLoaded = true;
+
+            RecomputeRangesPreview();
+        }
+        catch (Exception ex)
+        {
+            _error = $"Erreur chargement PDF : {ex.Message}";
+            _pdfLoaded = false;
+            _pdfBytes = null;
+            _pageCount = 0;
+        }
     }
 
     private async Task HandleSplitAsync()
@@ -86,6 +230,8 @@ else
         catch (Exception ex)
         {
             _error = ex.Message;
+            _rangeCount = 0;
+            _rangesPreview = "";
             return;
         }
 
@@ -96,11 +242,33 @@ else
         }
         catch (Exception ex)
         {
-            _error = $"Erreur pendant le split: {ex.Message}";
+            _error = $"Erreur pendant le split : {ex.Message}";
         }
         finally
         {
             _isBusy = false;
+        }
+    }
+
+    private void RecomputeRangesPreview()
+    {
+        if (!_pdfLoaded || _pageCount <= 0)
+        {
+            _rangeCount = 0;
+            _rangesPreview = "";
+            return;
+        }
+
+        try
+        {
+            var ranges = ParseRanges(_rangesInput, _pageCount);
+            _rangeCount = ranges.Length;
+            _rangesPreview = string.Join(", ", ranges.Select(r => $"{r.Start}-{r.End}"));
+        }
+        catch
+        {
+            _rangeCount = 0;
+            _rangesPreview = "";
         }
     }
 
@@ -126,7 +294,6 @@ else
             if (start <= 0 || end <= 0 || start > maxPage || end > maxPage)
                 throw new Exception($"Pages hors limites (1 - {maxPage}) dans '{part}'");
 
-            // normalise si inversé
             if (end < start) (start, end) = (end, start);
 
             ranges.Add(new PdfPageOperations.PageRange1Based { Start = start, End = end });
@@ -136,5 +303,18 @@ else
             throw new Exception("Aucune plage valide trouvée.");
 
         return ranges.ToArray();
+    }
+
+    private Task OnNoopSelectedPagesChanged(int[] _)
+        => Task.CompletedTask;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JS.InvokeVoidAsync("pdfDrop.wireDropZone", ".dropzone-split", "pdfInput");
+        }
+
+        RecomputeRangesPreview();
     }
 }

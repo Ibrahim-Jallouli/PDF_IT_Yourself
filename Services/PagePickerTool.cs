@@ -10,7 +10,6 @@ namespace PDF_IT_Yourself.Services
         private IJSObjectReference? _pdf;
         private string? _pdfKey;
 
-        // protège EnsureLoadedAsync contre appels concurrents
         private readonly SemaphoreSlim _loadGate = new(1, 1);
 
         public PagePickerTool(PdfInterop interop) => _interop = interop;
@@ -72,7 +71,6 @@ namespace PDF_IT_Yourself.Services
 
         public async ValueTask DisposeAsync()
         {
-            // pas obligatoire, mais propre
             _loadGate.Dispose();
             await UnloadAsync();
         }

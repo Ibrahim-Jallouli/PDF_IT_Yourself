@@ -2,87 +2,244 @@
 @using Microsoft.AspNetCore.Components.Forms
 @inject PDF_IT_Yourself.Services.PdfDocumentLoader Loader
 @inject PDF_IT_Yourself.Tools.Watermark.WatermarkTool WatermarkTool
+@inject IJSRuntime JS
 
-<h3>Add Watermark</h3>
+<div class="app-bg">
+    <div class="container py-4 ">
 
-<div class="mb-3">
-    <label class="form-label">Choisir un PDF</label>
-    <InputFile OnChange="OnFileSelected" accept="application/pdf" />
+        <!-- Header -->
+        <div class="tool-header mb-4">
+            <div>
+                <h1 class="h3 fw-bold mb-1">Add watermark</h1>
+                <div class="text-secondary">Add a watermark to all pages — 100% local, no upload.</div>
+            </div>
+        </div>
+
+        <div class="row g-4 align-items-start">
+            <!-- LEFT -->
+            <div class="col-12 col-lg-4">
+                <div class="card-surface tool-left">
+
+                    <div class="section-title">1) Choose a PDF</div>
+
+                    <!-- Dropzone -->
+                    <div class="dropzone-wrap mb-3">
+                        <label class="dropzone dropzone-watermark @( _dragOver ? "is-dragover" : "" )"
+                               @ondragenter="OnDragEnter"
+                               @ondragleave="OnDragLeave"
+                               @ondragover="OnDragOver"
+                               @ondragover:preventDefault
+                               @ondrop="OnDrop"
+                               @ondrop:preventDefault>
+
+                            <div class="dz-icon">📄</div>
+                            <div class="dz-text">
+                                <div class="fw-semibold">Drag & drop your PDF here</div>
+                                <div class="text-secondary small">or click to select (PDF, max 50MB)</div>
+                            </div>
+
+                            <InputFile id="pdfInput"
+                                       class="dz-input"
+                                       OnChange="OnFileSelected"
+                                       accept="application/pdf" />
+                        </label>
+
+                        @if (_pdfLoaded)
+                        {
+                            <div class="file-pill mt-2">
+                                <span class="me-2">✅</span>
+                                <span class="text-truncate">@(_fileName ?? "PDF loaded")</span>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="section-title">2) Settings</div>
+
+                    @if (_pdfLoaded)
+                    {
+                        <div class="meta-grid mb-3">
+                            <div class="meta-item">
+                                <div class="meta-label">Pages</div>
+                                <div class="meta-value">@_pageCount</div>
+                            </div>
+                            <div class="meta-item">
+                                <div class="meta-label">Opacity</div>
+                                <div class="meta-value">@($"{_opacity:0.##}")</div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label mb-1">Text</label>
+                            <input class="form-control"
+                                   placeholder="WATERMARK"
+                                   @bind="_text"
+                                   @bind:event="oninput"
+                                   disabled="@_isBusy" />
+                        </div>
+
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label class="form-label mb-1">Size</label>
+                                <input type="number"
+                                       class="form-control"
+                                       min="8"
+                                       max="200"
+                                       @bind="_fontSize"
+                                       @bind:event="oninput"
+                                       disabled="@_isBusy" />
+                            </div>
+
+                            <div class="col-6">
+                                <label class="form-label mb-1">Opacity</label>
+                                <input type="number"
+                                       step="0.05"
+                                       class="form-control"
+                                       min="0.05"
+                                       max="1"
+                                       @bind="_opacity"
+                                       @bind:event="oninput"
+                                       disabled="@_isBusy" />
+                                <div class="form-text">Between 0.05 and 1.0</div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label mb-1">Color</label>
+                            <input type="color"
+                                   class="form-control form-control-color"
+                                   @bind="_colorHex"
+                                   disabled="@_isBusy" />
+                        </div>
+
+                        <div class="actions">
+                            <button class="btn btn-primary w-100"
+                                    @onclick="HandleWatermarkAsync"
+                                    disabled="@(_isBusy || !_pdfLoaded)">
+                                @(_isBusy ? "Processing..." : "Add Watermark & Download")
+                            </button>
+
+                            <div class="hint text-secondary small mt-2">
+                                Tip: increase the size and lower the opacity for a subtle watermark.
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="empty-left text-secondary small">
+                            Upload a PDF to enable preview and settings.
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrWhiteSpace(_error))
+                    {
+                        <div class="alert alert-danger mt-3 mb-0">@_error</div>
+                    }
+                </div>
+            </div>
+
+            <!-- RIGHT -->
+            <div class="col-12 col-lg-8">
+                <div class="card-surface">
+                    <div class="preview-header">
+                        <div class="section-title mb-0">3) Preview</div>
+                    </div>
+
+                    @if (_pdfLoaded)
+                    {
+                        <div class="preview-scroll">
+                            <WatermarkBlankPreview Text="@_text"
+                                                   FontSize="@_fontSize"
+                                                   Opacity="@_opacity"
+                                                   ColorHex="@_colorHex" />
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="empty-preview text-secondary">
+                            The preview will appear here after upload.
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+    </div>
 </div>
-
-@if (_pdfLoaded)
-{
-    <div class="mb-3">
-        <label class="form-label">Texte du watermark</label>
-        <input class="form-control" @bind="_text" />
-    </div>
-
-    <div class="mb-3">
-        <label class="form-label">Taille</label>
-        <input type="number" class="form-control" @bind="_fontSize" />
-    </div>
-
-    <div class="mb-3">
-        <label class="form-label">Opacité (0.1 - 1)</label>
-        <input type="number" step="0.05" class="form-control" @bind="_opacity" />
-    </div>
-
-    <div class="mb-3">
-        <label class="form-label">Rotation (degrés)</label>
-        <input type="number" class="form-control" @bind="_rotation" />
-    </div>
-
-    <button class="btn btn-primary" @onclick="HandleWatermarkAsync" disabled="@_isBusy">
-        @(_isBusy ? "Processing..." : "Add Watermark & Download")
-    </button>
-
-    @if (!string.IsNullOrWhiteSpace(_error))
-    {
-        <div class="alert alert-danger mt-3">@_error</div>
-    }
-}
-else
-{
-    <div class="text-muted">Charge un PDF pour commencer.</div>
-}
 
 @code {
     private byte[]? _pdfBytes;
+    private int _pageCount;
     private bool _pdfLoaded;
     private bool _isBusy;
     private string _error = "";
 
-    private string _text = "CONFIDENTIAL";
+    private string _text = "WATERMARK";
     private int _fontSize = 48;
     private double _opacity = 0.15;
-    private int _rotation = 45;
+
+    private string _colorHex = "#333333";
+
+    // UI
+    private bool _dragOver;
+    private string? _fileName;
+
+    private void OnDragEnter(DragEventArgs e) => _dragOver = true;
+    private void OnDragOver(DragEventArgs e) => _dragOver = true;
+    private void OnDragLeave(DragEventArgs e) => _dragOver = false;
+
+    private void OnDrop(DragEventArgs e)
+    {
+        _dragOver = false;
+        StateHasChanged();
+    }
 
     private async Task OnFileSelected(InputFileChangeEventArgs e)
     {
         _error = "";
         _pdfLoaded = false;
+        _isBusy = false;
+
         _pdfBytes = null;
+        _pageCount = 0;
+        _fileName = null;
 
         var file = e.File;
         if (file is null) return;
 
-        using var stream = file.OpenReadStream(maxAllowedSize: 50 * 1024 * 1024);
-        using var ms = new MemoryStream();
-        await stream.CopyToAsync(ms);
-        _pdfBytes = ms.ToArray();
+        try
+        {
+            _fileName = file.Name;
 
-        await Loader.GetValidatedPageCountAsync(_pdfBytes); // validation
+            using var stream = file.OpenReadStream(maxAllowedSize: 50 * 1024 * 1024);
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+            _pdfBytes = ms.ToArray();
 
-        _pdfLoaded = true;
+            _pageCount = await Loader.GetValidatedPageCountAsync(_pdfBytes);
+            _pdfLoaded = true;
+        }
+        catch (Exception ex)
+        {
+            _error = $"Error loading PDF: {ex.Message}";
+            _pdfLoaded = false;
+            _pdfBytes = null;
+            _pageCount = 0;
+        }
     }
 
     private async Task HandleWatermarkAsync()
     {
         _error = "";
 
-        if (_pdfBytes is null)
+        if (_pdfBytes is null || !_pdfLoaded)
         {
-            _error = "Aucun PDF chargé.";
+            _error = "No PDF loaded.";
+            return;
+        }
+
+        if (_opacity < 0.05 || _opacity > 1)
+        {
+            _error = "Opacity must be between 0.05 and 1.0.";
             return;
         }
 
@@ -91,18 +248,26 @@ else
         {
             await WatermarkTool.AddWatermarkAndDownloadAsync(
                 _pdfBytes,
-                _text,
+                string.IsNullOrWhiteSpace(_text) ? "WATERMARK" : _text,
                 _fontSize,
                 _opacity,
-                _rotation);
+                _colorHex);
         }
         catch (Exception ex)
         {
-            _error = $"Erreur: {ex.Message}";
+            _error = $"Error: {ex.Message}";
         }
         finally
         {
             _isBusy = false;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JS.InvokeVoidAsync("pdfDrop.wireDropZone", ".dropzone-watermark", "pdfInput");
         }
     }
 }

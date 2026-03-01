@@ -1,0 +1,72 @@
+﻿<div class="blank-preview">
+    <div class="blank-page">
+        <div class="pn-overlay" style="@OverlayStyle">@OverlayText</div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public string Template { get; set; } = "Page {n} / {total}";
+    [Parameter] public string Position { get; set; } = "bottom-center";
+    [Parameter] public int FontSize { get; set; } = 12;
+    [Parameter] public double Opacity { get; set; } = 0.9;
+
+    [Parameter] public int PageNumber { get; set; } = 1;
+    [Parameter] public int TotalPages { get; set; } = 12;
+
+    private string OverlayText =>
+        (Template ?? "Page {n} / {total}")
+            .Replace("{n}", PageNumber.ToString())
+            .Replace("{total}", TotalPages.ToString());
+
+    private string OverlayStyle => BuildOverlayStyle(Position, FontSize, Opacity);
+
+    private static string BuildOverlayStyle(string position, int fontSize, double opacity)
+    {
+        opacity = Math.Clamp(opacity, 0.0, 1.0);
+        fontSize = Math.Clamp(fontSize, 6, 96);
+
+        const int pad = 16;
+
+        var s = new System.Text.StringBuilder();
+        s.Append("position:absolute;");
+        s.Append("pointer-events:none;");
+        s.Append($"font-size:{fontSize}px;");
+        s.Append($"opacity:{opacity:0.##};");
+        s.Append("color:rgba(0,0,0,1);");
+        s.Append("max-width:90%;");
+        s.Append("white-space:nowrap;");
+        s.Append("text-overflow:ellipsis;");
+        s.Append("overflow:hidden;");
+        s.Append("top:auto;right:auto;bottom:auto;left:auto;transform:none;");
+
+        switch ((position ?? "").ToLowerInvariant())
+        {
+            case "top-left":
+                s.Append($"top:{pad}px;left:{pad}px;");
+                break;
+
+            case "top-center":
+                s.Append($"top:{pad}px;left:50%;transform:translateX(-50%);");
+                break;
+
+            case "top-right":
+                s.Append($"top:{pad}px;right:{pad}px;");
+                break;
+
+            case "bottom-left":
+                s.Append($"bottom:{pad}px;left:{pad}px;");
+                break;
+
+            case "bottom-center":
+                s.Append($"bottom:{pad}px;left:50%;transform:translateX(-50%);");
+                break;
+
+            case "bottom-right":
+            default:
+                s.Append($"bottom:{pad}px;right:{pad}px;");
+                break;
+        }
+
+        return s.ToString();
+    }
+}

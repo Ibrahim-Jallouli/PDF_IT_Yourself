@@ -1,0 +1,196 @@
+﻿@page "/faq"
+<div class="container py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-9">
+
+                <!-- Header -->
+                <div class="text-center mb-4">
+                    <span class="badge rounded-pill text-bg-primary px-3 py-2">FAQ</span>
+                    <h1 class="mt-3 fw-bold display-6">Questions fréquentes</h1>
+                    <p class="text-secondary mb-0">
+                        Retrouvez les réponses aux questions courantes sur les fonctionnalités, la confidentialité et l’utilisation de
+                        <span class="fw-semibold">PDF it yourself</span>.
+                    </p>
+
+                    <div class="d-flex justify-content-center gap-2 mt-3 flex-wrap">
+                        <a class="btn btn-dark btn-sm px-3" target="_blank" rel="noopener"
+                            href="https://github.com/Ibrahim-Jallouli/PDF_IT_Yourself">
+                            <i class="bi bi-github me-2"></i>Voir sur GitHub
+                        </a>
+                        <a class="btn btn-outline-primary btn-sm px-3" href="/">
+                            <i class="bi bi-lightning-charge me-2"></i>Essayer les outils
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Card -->
+                <div class="card border-0 shadow-sm faq-card">
+                    <div class="card-body p-0">
+
+                        <div class="accordion accordion-flush" id="faqAccordion">
+
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="h1">
+                                    <button class="accordion-button" type="button"
+                                            data-bs-toggle="collapse" data-bs-target="#c1"
+                                            aria-expanded="true" aria-controls="c1">
+                                        <span class="me-2 text-primary"><i class="bi bi-shield-lock"></i></span>
+                                        Mes fichiers sont-ils vraiment privés ?
+                                    </button>
+                                </h2>
+                                <div id="c1" class="accordion-collapse collapse show" aria-labelledby="h1" data-bs-parent="#faqAccordion">
+                                    <div class="accordion-body">
+                                        Oui, totalement. Tout le traitement PDF se fait <strong>dans votre navigateur</strong> (WebAssembly).
+                                        Vos fichiers ne sont <strong>jamais envoyés</strong> sur nos serveurs et nous ne pouvons pas y accéder.
+                                        Quand vous fermez la page, les données en mémoire sont automatiquement libérées.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="h2">
+                                    <button class="accordion-button collapsed" type="button"
+                                            data-bs-toggle="collapse" data-bs-target="#c2"
+                                            aria-expanded="false" aria-controls="c2">
+                                        <span class="me-2 text-primary"><i class="bi bi-person-check"></i></span>
+                                        Dois-je créer un compte ?
+                                    </button>
+                                </h2>
+                                <div id="c2" class="accordion-collapse collapse" aria-labelledby="h2" data-bs-parent="#faqAccordion">
+                                    <div class="accordion-body">
+                                        Non. Aucun compte n’est requis : pas d’inscription, pas de connexion.
+                                        Vous ouvrez l’app et vous utilisez les outils immédiatement.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="h3">
+                                    <button class="accordion-button collapsed" type="button"
+                                            data-bs-toggle="collapse" data-bs-target="#c3"
+                                            aria-expanded="false" aria-controls="c3">
+                                        <span class="me-2 text-primary"><i class="bi bi-piggy-bank"></i></span>
+                                        Est-ce vraiment gratuit ?
+                                    </button>
+                                </h2>
+                                <div id="c3" class="accordion-collapse collapse" aria-labelledby="h3" data-bs-parent="#faqAccordion">
+                                    <div class="accordion-body">
+                                        Oui. <strong>PDF it yourself</strong> est 100% gratuit : pas de coûts cachés, pas d’abonnement, pas de premium.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="h4">
+                                    <button class="accordion-button collapsed" type="button"
+                                            data-bs-toggle="collapse" data-bs-target="#c4"
+                                            aria-expanded="false" aria-controls="c4">
+                                        <span class="me-2 text-primary"><i class="bi bi-hdd"></i></span>
+                                        Quelles limites de taille de fichier ?
+                                    </button>
+                                </h2>
+                                <div id="c4" class="accordion-collapse collapse" aria-labelledby="h4" data-bs-parent="#faqAccordion">
+                                    <div class="accordion-body">
+                                        Comme le traitement est local, la limite dépend surtout de la mémoire (RAM) de votre appareil.
+                                        Les gros PDFs peuvent être plus lents, surtout sur mobile.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="h5">
+                                    <button class="accordion-button collapsed" type="button"
+                                            data-bs-toggle="collapse" data-bs-target="#c5"
+                                            aria-expanded="false" aria-controls="c5">
+                                        <span class="me-2 text-primary"><i class="bi bi-browser-chrome"></i></span>
+                                        Quels navigateurs sont supportés ?
+                                    </button>
+                                </h2>
+                                <div id="c5" class="accordion-collapse collapse" aria-labelledby="h5" data-bs-parent="#faqAccordion">
+                                    <div class="accordion-body">
+                                        Tous les navigateurs modernes compatibles WebAssembly (Chrome/Edge, Firefox, Safari).
+                                        On recommande la dernière version.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="h6">
+                                    <button class="accordion-button collapsed" type="button"
+                                            data-bs-toggle="collapse" data-bs-target="#c6"
+                                            aria-expanded="false" aria-controls="c6">
+                                        <span class="me-2 text-primary"><i class="bi bi-wifi-off"></i></span>
+                                        Puis-je utiliser l’app hors ligne ?
+                                    </button>
+                                </h2>
+                                <div id="c6" class="accordion-collapse collapse" aria-labelledby="h6" data-bs-parent="#faqAccordion">
+                                    <div class="accordion-body">
+                                        Oui. Une fois chargée, l’app peut fonctionner hors ligne. Si tu proposes une installation PWA, c’est encore plus pratique.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="h7">
+                                    <button class="accordion-button collapsed" type="button"
+                                            data-bs-toggle="collapse" data-bs-target="#c7"
+                                            aria-expanded="false" aria-controls="c7">
+                                        <span class="me-2 text-primary"><i class="bi bi-tools"></i></span>
+                                        Quelles opérations PDF puis-je faire ?
+                                    </button>
+                                </h2>
+                                <div id="c7" class="accordion-collapse collapse" aria-labelledby="h7" data-bs-parent="#faqAccordion">
+                                    <div class="accordion-body">
+                                        Fusion, séparation, compression, rotation, extraction/suppression de pages,
+                                        conversion PDF ⇄ images, extraction de texte, watermark… (selon les outils disponibles).
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="h8">
+                                    <button class="accordion-button collapsed" type="button"
+                                            data-bs-toggle="collapse" data-bs-target="#c8"
+                                            aria-expanded="false" aria-controls="c8">
+                                        <span class="me-2 text-primary"><i class="bi bi-bug"></i></span>
+                                        Comment signaler un bug ou demander une feature ?
+                                    </button>
+                                </h2>
+                                <div id="c8" class="accordion-collapse collapse" aria-labelledby="h8" data-bs-parent="#faqAccordion">
+                                    <div class="accordion-body">
+                                        Tu peux ouvrir une issue sur GitHub :
+                                        <a target="_blank" rel="noopener" href="https://github.com/Ibrahim-Jallouli/PDF_IT_Yourself" class="link-primary">
+                                            Ibrahim-Jallouli/PDF_IT_Yourself
+                                        </a>.
+                                        On lit tous les retours.
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Footer CTA -->
+                <div class="mt-4 p-4 rounded-4 border bg-white shadow-sm d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+                    <div>
+                        <h5 class="mb-1 fw-bold">Encore une question ?</h5>
+                        <p class="text-secondary mb-0">Ouvre une issue sur GitHub, ou passe par la page À propos.</p>
+                    </div>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <a class="btn btn-primary" href="/"><i class="bi bi-play-circle me-2"></i>Try our tools</a>
+                        <a class="btn btn-outline-dark" target="_blank" rel="noopener"
+                            href="https://github.com/Ibrahim-Jallouli/PDF_IT_Yourself">
+                            <i class="bi bi-github me-2"></i>GitHub
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+

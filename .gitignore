@@ -19,7 +19,7 @@ Thumbs.db
 # Environment / secrets
 appsettings.Development.json
 
-# Node / tooling (au cas où plus tard)
+# Node / tooling 
 node_modules/
 
 # Publish output

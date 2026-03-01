@@ -47,16 +47,17 @@ namespace PDF_IT_Yourself.Interop
         public Task<byte[]> AddPageNumbersAsync(byte[] pdfBytes, PageNumberOptions? options = null)
             => _js.InvokeAsync<byte[]>("PdfTools.addPageNumbers", pdfBytes, options ?? new PageNumberOptions()).AsTask();
 
+        public Task<byte[]> CompressLosslessAsync(byte[] pdfBytes, CompressOptions? options = null) 
+            => _js.InvokeAsync<byte[]>("PdfTools.compressPdfLossless",pdfBytes,options ?? new CompressOptions()).AsTask();
+
         public ValueTask DownloadBytesAsync(string filename, byte[] bytes, string mimeType = "application/pdf")
             => _js.InvokeVoidAsync("PdfTools.downloadBytes", filename, bytes, mimeType);
 
-        public ValueTask<IJSObjectReference> LoadPdfAsync(
-         byte[] pdfBytes,
-         CancellationToken cancellationToken = default)
-         => _js.InvokeAsync<IJSObjectReference>(
-             "PdfTools.loadPdf",
-             cancellationToken,
-             pdfBytes);
+        public Task<byte[]> ImageToPdfAsync(byte[] imageBytes, ImageToPdfOptions? options = null)
+           => _js.InvokeAsync<byte[]>("PdfTools.imageToPdf", imageBytes, options ?? new ImageToPdfOptions()).AsTask();
+
+        public ValueTask<IJSObjectReference> LoadPdfAsync(byte[] pdfBytes,CancellationToken cancellationToken = default)
+           => _js.InvokeAsync<IJSObjectReference>("PdfTools.loadPdf",cancellationToken,pdfBytes);
 
         public ValueTask<string> RenderPageToObjectUrlAsync(
             IJSObjectReference pdf,
@@ -80,13 +81,8 @@ namespace PDF_IT_Yourself.Interop
             return _js.InvokeVoidAsync("PdfTools.revokeObjectUrl", cancellationToken, url);
         }
 
-        public ValueTask DestroyPdfAsync(
-            IJSObjectReference pdf,
-            CancellationToken cancellationToken = default)
-            => _js.InvokeVoidAsync(
-                "PdfTools.destroyPdf",
-                cancellationToken,
-                pdf);
+        public ValueTask DestroyPdfAsync(IJSObjectReference pdf,CancellationToken cancellationToken = default)
+           => _js.InvokeVoidAsync("PdfTools.destroyPdf",cancellationToken, pdf);
         // -------------------------
         // DTOs sent to JS
         // -------------------------
@@ -104,19 +100,39 @@ namespace PDF_IT_Yourself.Interop
             public double b { get; set; } = 0;
         }
 
+        public sealed class Rgb01
+        {
+            public double r { get; set; }
+            public double g { get; set; }
+            public double b { get; set; }
+        }
+
         public sealed class WatermarkOptions
         {
-            public string text { get; set; } = "CONFIDENTIAL";
+            public string text { get; set; } = "WATERMARK";
             public int fontSize { get; set; } = 48;
             public double opacity { get; set; } = 0.15;
-            public int rotationDegrees { get; set; } = 45;
 
-            public RgbColor color { get; set; } = new RgbColor { r = 0.2, g = 0.2, b = 0.2 };
+            public Rgb01 color { get; set; } = new Rgb01 { r = 0.2, g = 0.2, b = 0.2 };
 
+            // "center" | "diagonal"
             public string placement { get; set; } = "diagonal";
 
             public double offsetX { get; set; } = 0;
             public double offsetY { get; set; } = 0;
+        }
+
+        public sealed class CompressOptions
+        {
+            public bool stats { get; set; } = false; 
+        }
+
+        public sealed class ImageToPdfOptions
+        {
+            public string Page { get; set; } = "A4";
+            public double Margin { get; set; } = 10;
+            public string Fit { get; set; } = "contain";
+            public string? Filename { get; set; }
         }
 
         public sealed class PageNumberOptions
@@ -129,10 +145,7 @@ namespace PDF_IT_Yourself.Interop
             public double marginX { get; set; } = 40;
             public double marginY { get; set; } = 25;
 
-            // "bottom-right" | "bottom-center" | "bottom-left" | "top-right" | ...
             public string position { get; set; } = "bottom-right";
-
-            // supports {n} and {total}
             public string template { get; set; } = "{n}/{total}";
 
             public int startAt { get; set; } = 1;

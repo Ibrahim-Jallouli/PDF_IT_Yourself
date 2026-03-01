@@ -1,0 +1,152 @@
+﻿@page "/png-to-pdf"
+@using Microsoft.AspNetCore.Components.Forms
+@inherits ConversionIMGtoPDFTool
+
+<div class="app-bg">
+    <div class="container py-4">
+
+        <!-- Header -->
+        <div class="tool-header mb-4">
+            <div>
+                <h1 class="h3 fw-bold mb-1">Image to PDF</h1>
+                <div class="text-secondary">Convert an image to a single-page PDF — 100% local, no upload.</div>
+            </div>
+        </div>
+
+        <div class="row g-4 align-items-start">
+            <!-- LEFT -->
+            <div class="col-12 col-lg-4">
+                <div class="card-surface tool-left">
+
+                    <div class="section-title">1) Choose an image</div>
+
+                    <!-- Dropzone -->
+                    <div class="dropzone-wrap mb-3">
+                        <label class="dropzone dropzone-img2pdf @( _dragOver ? "is-dragover" : "" )"
+                               @ondragenter="OnDragEnter"
+                               @ondragleave="OnDragLeave"
+                               @ondragover="OnDragOver"
+                               @ondragover:preventDefault
+                               @ondrop="OnDrop"
+                               @ondrop:preventDefault>
+
+                            <div class="dz-icon">🖼️</div>
+                            <div class="dz-text">
+                                <div class="fw-semibold">Drag & drop your image here</div>
+                                <div class="text-secondary small">or click to select (PNG/JPG/WebP, max 25MB)</div>
+                            </div>
+
+                            <InputFile id="imgInput"
+                                       class="dz-input"
+                                       OnChange="OnImageSelected"
+                                       accept="image/png,image/jpeg,image/webp" />
+                        </label>
+
+                        @if (_imageLoaded)
+                        {
+                            <div class="file-pill mt-2">
+                                <span class="me-2">✅</span>
+                                <span class="text-truncate">@(_fileName ?? "Image loaded")</span>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="section-title">2) Settings</div>
+
+                    @if (_imageLoaded)
+                    {
+                        <div class="meta-grid mb-3">
+                            <div class="meta-item">
+                                <div class="meta-label">Type</div>
+                                <div class="meta-value">@(_contentType ?? "-")</div>
+                            </div>
+                            <div class="meta-item">
+                                <div class="meta-label">Size</div>
+                                <div class="meta-value">@FormatBytes(_imageBytes?.LongLength ?? 0)</div>
+                            </div>
+                        </div>
+
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label class="form-label mb-1">Page</label>
+                                <select class="form-select" @bind="_page" disabled="@_isBusy">
+                                    <option value="A4">A4</option>
+                                    <option value="Letter">Letter</option>
+                                </select>
+                            </div>
+
+                            <div class="col-6">
+                                <label class="form-label mb-1">Fit</label>
+                                <select class="form-select" @bind="_fit" disabled="@_isBusy">
+                                    <option value="contain">Contain</option>
+                                    <option value="cover">Cover</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label mb-1">Margin (mm)</label>
+                            <input type="number"
+                                   class="form-control"
+                                   min="0"
+                                   max="30"
+                                   step="1"
+                                   @bind="_margin"
+                                   @bind:event="oninput"
+                                   disabled="@_isBusy" />
+                            <div class="form-text">0 to 30mm</div>
+                        </div>
+
+                        <div class="actions">
+                            <button class="btn btn-primary w-100"
+                                    @onclick="ConvertAndDownload"
+                                    disabled="@(_isBusy || !_imageLoaded)">
+                                @(_isBusy ? "Converting..." : "Convert & Download")
+                            </button>
+
+                            <div class="hint text-secondary small mt-2">
+                                Tip: Use “Contain” to avoid cropping, “Cover” to fill the page.
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="empty-left text-secondary small">
+                            Upload an image to enable settings and conversion.
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrWhiteSpace(_error))
+                    {
+                        <div class="alert alert-danger mt-3 mb-0">@_error</div>
+                    }
+                </div>
+            </div>
+
+            <!-- RIGHT -->
+            <div class="col-12 col-lg-8">
+                <div class="card-surface">
+                    <div class="preview-header">
+                        <div class="section-title mb-0">3) Preview</div>
+                    </div>
+
+                    @if (_imageLoaded && !string.IsNullOrWhiteSpace(_imageDataUrl))
+                    {
+                        <div class="preview-scroll p-3">
+                            <img src="@_imageDataUrl"
+                                 alt="Preview"
+                                 style="max-width:100%; height:auto; border-radius:12px; border:1px solid rgba(0,0,0,.06);" />
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="empty-preview text-secondary">
+                            The image preview will appear here after upload.
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>

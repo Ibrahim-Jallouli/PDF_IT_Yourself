@@ -1,90 +1,222 @@
 ﻿@page "/extract"
 @using Microsoft.AspNetCore.Components.Forms
-@using System.Text.RegularExpressions
 @inject PDF_IT_Yourself.Services.PdfDocumentLoader Loader
 @inject PDF_IT_Yourself.Tools.Extract.ExtractTool ExtractTool
+@inject IJSRuntime JS
 
-<h3>Extract Pages</h3>
+<div class="app-bg">
+    <div class="container py-4 ">
 
-<div class="mb-3">
-    <label class="form-label">Choisir un PDF</label>
-    <InputFile OnChange="OnFileSelected" accept="application/pdf" />
-</div>
-
-@if (_pdfLoaded)
-{
-    <div class="mb-3">
-        <div class="text-muted">Pages détectées : @_pageCount</div>
-    </div>
-
-    <div class="mb-3">
-        <label class="form-label">Pages à extraire</label>
-        <input class="form-control" placeholder="Ex: 1,3,5 ou 2-6"
-               @bind="_pagesInput" />
-        <div class="form-text">
-            Format: liste séparée par virgules et plages (ex: 1,3,5, 2-6)
+        <!-- Header -->
+        <div class="tool-header mb-4">
+            <div>
+                <h1 class="h3 fw-bold mb-1">Extract pages</h1>
+                <div class="text-secondary">Extract pages from a PDF — 100% local, no upload.</div>
+            </div>
         </div>
+
+        <div class="row g-4 align-items-start">
+            <!-- LEFT -->
+            <div class="col-12 col-lg-4">
+                <div class="card-surface tool-left">
+
+                    <div class="section-title">1) Choose a PDF</div>
+
+                    <!-- Dropzone -->
+                    <div class="dropzone-wrap mb-3">
+                        <label class="dropzone dropzone-extract @( _dragOver ? "is-dragover" : "" )"
+                               @ondragenter="OnDragEnter"
+                               @ondragleave="OnDragLeave"
+                               @ondragover="OnDragOver"
+                               @ondragover:preventDefault
+                               @ondrop="OnDrop"
+                               @ondrop:preventDefault>
+
+                            <div class="dz-icon">📄</div>
+                            <div class="dz-text">
+                                <div class="fw-semibold">Drag & drop your PDF here</div>
+                                <div class="text-secondary small">or click to select (PDF, max 50MB)</div>
+                            </div>
+
+                            <InputFile id="pdfInput"
+                                       class="dz-input"
+                                       OnChange="OnFileSelected"
+                                       accept="application/pdf" />
+                        </label>
+
+                        @if (_pdfLoaded)
+                        {
+                            <div class="file-pill mt-2">
+                                <span class="me-2">✅</span>
+                                <span class="text-truncate">@(_fileName ?? "PDF loaded")</span>
+                            </div>
+                        }
+                    </div>
+
+                    <!-- Info / Selection -->
+                    <div class="section-title">Info</div>
+
+                    @if (_pdfLoaded)
+                    {
+                        <div class="meta-grid mb-3">
+                            <div class="meta-item">
+                                <div class="meta-label">Pages detected</div>
+                                <div class="meta-value">@_pageCount</div>
+                            </div>
+                            <div class="meta-item">
+                                <div class="meta-label">Selected</div>
+                                <div class="meta-value">@_selectedPages.Length</div>
+                            </div>
+                        </div>
+
+                        @if (_selectedPages.Length > 0)
+                        {
+                            <div class="selected-box mb-3">
+                                <div class="small text-secondary mb-1">Pages to extract</div>
+                                <div class="selected-list">@string.Join(", ", _selectedPages)</div>
+                            </div>
+                        }
+
+                        <!-- Actions -->
+                        <div class="actions">
+                            <button class="btn btn-primary w-100"
+                                    @onclick="ExtractPages"
+                                    disabled="@(_isBusy || _selectedPages.Length == 0)">
+                                @(_isBusy ? "Extracting..." : "Extract & Download")
+                            </button>
+
+                            <div class="hint text-secondary small mt-2">
+                                Tip: select pages directly in the preview.
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="empty-left text-secondary small">
+                            Upload a PDF to enable preview and selection.
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrWhiteSpace(_error))
+                    {
+                        <div class="alert alert-danger mt-3 mb-0">@_error</div>
+                    }
+                </div>
+            </div>
+
+            <!-- RIGHT -->
+            <div class="col-12 col-lg-8">
+                <div class="card-surface">
+
+                    <div class="preview-header">
+                        <div class="section-title mb-0">2) Preview & selection</div>
+                    </div>
+
+                    @if (_pdfLoaded)
+                    {
+                        <div class="preview-scroll">
+                            <PagePicker @key="_pickerKey"
+                                        PdfBytes="_pdfBytes"
+                                        PageCount="_pageCount"
+                                        IsBusy="_isBusy"
+                                        SelectedPages1Based="_selectedPages"
+                                        SelectedPages1BasedChanged="OnSelectedPagesChanged" />
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="empty-preview text-secondary">
+                            The page preview will appear here after upload.
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
     </div>
-
-    <button class="btn btn-primary" @onclick="ExtractPages" disabled="@_isBusy">
-        @(_isBusy ? "Extraction..." : "Extraire")
-    </button>
-
-    @if (!string.IsNullOrWhiteSpace(_error))
-    {
-        <div class="alert alert-danger mt-3">@_error</div>
-    }
-}
-else
-{
-    <div class="text-muted">Charge un PDF pour commencer.</div>
-}
-
+</div>
 @code {
     private byte[]? _pdfBytes;
     private int _pageCount;
     private bool _pdfLoaded;
     private bool _isBusy;
 
-    private string _pagesInput = "";
+    private int[] _selectedPages = Array.Empty<int>();
     private string _error = "";
+    private string _pickerKey = Guid.NewGuid().ToString("N");
+    private bool _dragOver;
+    private string? _fileName;
+
+    private void OnDragEnter(DragEventArgs e) => _dragOver = true;
+    private void OnDragOver(DragEventArgs e) => _dragOver = true;
+    private void OnDragLeave(DragEventArgs e) => _dragOver = false;
+
+    private void OnDrop(DragEventArgs e)
+    {
+        _dragOver = false;
+        StateHasChanged();
+    }
 
     private async Task OnFileSelected(InputFileChangeEventArgs e)
     {
         _error = "";
         _pdfLoaded = false;
+        _isBusy = false;
+
         _pdfBytes = null;
         _pageCount = 0;
+        _selectedPages = Array.Empty<int>();
+        _fileName = null;
+
+        _pickerKey = Guid.NewGuid().ToString("N");
 
         var file = e.File;
         if (file is null) return;
 
-        using var stream = file.OpenReadStream(maxAllowedSize: 50 * 1024 * 1024); // 50MB
-        using var ms = new MemoryStream();
-        await stream.CopyToAsync(ms);
-        _pdfBytes = ms.ToArray();
+        try
+        {
+            _fileName = file.Name;
 
-        _pageCount = await Loader.GetValidatedPageCountAsync(_pdfBytes);
-        _pdfLoaded = true;
+            using var stream = file.OpenReadStream(maxAllowedSize: 50 * 1024 * 1024); // 50MB
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+            _pdfBytes = ms.ToArray();
+
+            _pageCount = await Loader.GetValidatedPageCountAsync(_pdfBytes);
+
+            _selectedPages = Array.Empty<int>();
+            _pickerKey = Guid.NewGuid().ToString("N");
+            _pdfLoaded = true;
+        }
+        catch (Exception ex)
+        {
+            _error = $"Erreur chargement PDF : {ex.Message}";
+            _pdfLoaded = false;
+            _pdfBytes = null;
+            _pageCount = 0;
+        }
     }
 
     private async Task ExtractPages()
     {
         _error = "";
+
         if (_pdfBytes is null || _pageCount <= 0)
         {
             _error = "Aucun PDF chargé.";
             return;
         }
 
-        int[] pages;
-        try
+        var pages = _selectedPages
+            .Where(p => p >= 1 && p <= _pageCount)
+            .Distinct()
+            .OrderBy(p => p)
+            .ToArray();
+
+        if (pages.Length == 0)
         {
-            pages = ParsePages(_pagesInput, _pageCount);
-        }
-        catch (Exception ex)
-        {
-            _error = ex.Message;
+            _error = "Sélectionne au moins une page à extraire.";
+            _selectedPages = Array.Empty<int>();
             return;
         }
 
@@ -92,10 +224,11 @@ else
         try
         {
             await ExtractTool.ExtractAndDownloadAsync(_pdfBytes, pages, "extracted.pdf");
+            _selectedPages = Array.Empty<int>();
         }
         catch (Exception ex)
         {
-            _error = $"Erreur pendant l’extraction: {ex.Message}";
+            _error = $"Erreur pendant l’extraction : {ex.Message}";
         }
         finally
         {
@@ -103,51 +236,31 @@ else
         }
     }
 
-    // Supporte: "1,3,5" et "2-6" et mix: "1,3, 5-7"
-    private static int[] ParsePages(string input, int maxPage)
+    private Task OnSelectedPagesChanged(int[] pagesFromPicker)
     {
-        if (string.IsNullOrWhiteSpace(input))
-            throw new Exception("Entre des pages à extraire (ex: 1,3,5 ou 2-6).");
+        pagesFromPicker ??= Array.Empty<int>();
 
-        input = input.Replace(" ", "");
+        var isZeroBased = pagesFromPicker.Any(p => p == 0);
 
-        var set = new SortedSet<int>();
-        var parts = input.Split(',', StringSplitOptions.RemoveEmptyEntries);
+        var pages1Based = isZeroBased
+            ? pagesFromPicker.Select(p => p + 1)
+            : pagesFromPicker;
 
-        foreach (var part in parts)
+        _selectedPages = pages1Based
+            .Where(p => p >= 1 && p <= _pageCount)
+            .Distinct()
+            .OrderBy(p => p)
+            .ToArray();
+
+        _error = "";
+        return Task.CompletedTask;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
         {
-            if (part.Contains('-'))
-            {
-                var range = part.Split('-', StringSplitOptions.RemoveEmptyEntries);
-                if (range.Length != 2)
-                    throw new Exception($"Plage invalide: '{part}'");
-
-                if (!int.TryParse(range[0], out var start) || !int.TryParse(range[1], out var end))
-                    throw new Exception($"Plage invalide: '{part}'");
-
-                if (start <= 0 || end <= 0 || start > maxPage || end > maxPage)
-                    throw new Exception($"Pages hors limites (1 - {maxPage}) dans '{part}'");
-
-                if (end < start) (start, end) = (end, start);
-
-                for (int p = start; p <= end; p++)
-                    set.Add(p);
-            }
-            else
-            {
-                if (!int.TryParse(part, out var p))
-                    throw new Exception($"Page invalide: '{part}'");
-
-                if (p <= 0 || p > maxPage)
-                    throw new Exception($"Page hors limites (1 - {maxPage}): {p}");
-
-                set.Add(p);
-            }
+            await JS.InvokeVoidAsync("pdfDrop.wireDropZone", ".dropzone-extract", "pdfInput");
         }
-
-        if (set.Count == 0)
-            throw new Exception("Aucune page valide trouvée.");
-
-        return set.ToArray();
     }
 }

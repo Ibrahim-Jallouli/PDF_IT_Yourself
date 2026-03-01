@@ -1,23 +1,23 @@
 {
-  "name": "PDF_Yourself",
-  "short_name": "PDF_Yourself",
-  "id": "./",
-  "start_url": "./",
+  "name": "PDF IT Yourself",
+  "short_name": "PDF Tools",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#03173d",
   "prefer_related_applications": false,
   "icons": [
     {
-      "src": "Icon.png",
+      "src": "/img/icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/img/icon.png",
       "sizes": "512x512",
       "type": "image/png"
     }
-  ],
-  {
-    "src": "icon.png",
-    "type": "image/png",
-    "sizes": "192x192"
-  },
   ]
 }

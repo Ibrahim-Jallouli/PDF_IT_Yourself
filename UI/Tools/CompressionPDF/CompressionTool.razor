@@ -1,0 +1,379 @@
+﻿@page "/compression"
+@using Microsoft.AspNetCore.Components.Forms
+@inject PDF_IT_Yourself.Services.PdfDocumentLoader Loader
+@inject PDF_IT_Yourself.Tools.CompressionPDF.CompressionTool CompressionPdf
+@inject IJSRuntime JS
+
+<div class="app-bg">
+    <div class="container py-4 ">
+
+        <!-- Header -->
+        <div class="tool-header mb-4">
+            <div>
+                <h1 class="h3 fw-bold mb-1">Compress PDF</h1>
+                <div class="text-secondary">Optimize your PDF (lossless) — 100% local, no upload.</div>
+            </div>
+        </div>
+
+        <div class="row g-4 align-items-start">
+            <!-- LEFT -->
+            <div class="col-12 col-lg-4">
+                <div class="card-surface tool-left">
+
+                    <div class="section-title">1) Choose a PDF</div>
+
+                    <!-- Dropzone -->
+                    <div class="dropzone-wrap mb-3">
+                        <label class="dropzone dropzone-compress @( _dragOver ? "is-dragover" : "" )"
+                               @ondragenter="OnDragEnter"
+                               @ondragleave="OnDragLeave"
+                               @ondragover="OnDragOver"
+                               @ondragover:preventDefault
+                               @ondrop="OnDrop"
+                               @ondrop:preventDefault>
+
+                            <div class="dz-icon">📄</div>
+                            <div class="dz-text">
+                                <div class="fw-semibold">Drag & drop your PDF here</div>
+                                <div class="text-secondary small">or click to select (PDF, max 50MB)</div>
+                            </div>
+
+                            <InputFile id="pdfInputCompress"
+                                       class="dz-input"
+                                       OnChange="OnFileSelected"
+                                       accept="application/pdf" />
+                        </label>
+
+                        @if (_pdfLoaded)
+                        {
+                            <div class="file-pill mt-2">
+                                <span class="me-2">✅</span>
+                                <span class="text-truncate">@(_fileName ?? "PDF loaded")</span>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="section-title">Options</div>
+
+                    @if (_pdfLoaded)
+                    {
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="stats"
+                                       @bind="_stats" disabled="@_isBusy" />
+                                <label class="form-check-label" for="stats">
+                                    Generate stats (optional)
+                                </label>
+                            </div>
+                            <div class="text-secondary small mt-1">
+                                Lossless optimization keeps text/vectors. (May not always reduce size depending on PDF.)
+                            </div>
+                        </div>
+
+                        <div class="section-title">Info</div>
+
+                        <div class="meta-grid mb-3">
+                            <div class="meta-item">
+                                <div class="meta-label">Pages detected</div>
+                                <div class="meta-value">@_pageCount</div>
+                            </div>
+                            <div class="meta-item">
+                                <div class="meta-label">Original size</div>
+                                <div class="meta-value">@FormatBytes(_originalSizeBefore)</div>
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="actions">
+                            <button class="btn btn-primary w-100"
+                                    @onclick="CompressOnly"
+                                    disabled="@(_isBusy)">
+                                @(_isBusy ? "Compressing..." : "Compress")
+                            </button>
+
+                            @if (_compressedBytes is not null)
+                            {
+                                <button class="btn btn-outline-primary w-100 mt-2"
+                                        @onclick="DownloadCompressed"
+                                        disabled="@_isBusy">
+                                    Download compressed
+                                </button>
+                            }
+
+                            <div class="hint text-secondary small mt-2">
+                                Tip: Some PDFs are already optimized. In that case, size might stay similar.
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="empty-left text-secondary small">
+                            Upload a PDF to enable compression.
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrWhiteSpace(_error))
+                    {
+                        <div class="alert alert-danger mt-3 mb-0">@_error</div>
+                    }
+                </div>
+            </div>
+
+            <!-- RIGHT (Result summary instead of preview) -->
+            <div class="col-12 col-lg-8">
+                <div class="card-surface">
+
+                    <div class="preview-header">
+                        <div class="section-title mb-0">2) Result</div>
+                    </div>
+
+                    @if (_compressedBytes is not null && _compressedSize > 0 && _originalSizeBefore > 0)
+                    {
+                        <div class="result-wrap">
+                            <div class="result-row">
+                                <div class="donut" style="--p:@_savedPercent; --c:@(_savedPercent >= 1 ? "#e53935" : "#6c757d");">
+                                    <div class="donut-center">
+                                        <div class="donut-big">@($"{Math.Abs(_savedPercent):0.#}%")</div>
+                                        <div class="text-secondary small">
+                                            @(_savedPercent >= 0 ? "saved" : "bigger")
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div style="min-width:260px; flex: 1 1 300px;">
+                                    <div class="fw-semibold mb-1">
+                                        @if (_savedPercent > 0)
+                                        {
+                                            <span>Your PDF is smaller 🎉</span>
+                                        }
+                                        else if (_savedPercent < 0)
+                                        {
+                                            <span>Result is bigger (still valid)</span>
+                                        }
+                                        else
+                                        {
+                                            <span>No change in size</span>
+                                        }
+                                    </div>
+
+                                    <div class="text-secondary">
+                                        @FormatBytes(_originalSizeBefore) → <b>@FormatBytes(_compressedSize)</b>
+                                    </div>
+
+                                    <div class="text-secondary small mt-1">
+                                        @if (_savedBytes >= 0)
+                                        {
+                                            <span>You saved <b>@FormatBytes(_savedBytes)</b></span>
+                                        }
+                                        else
+                                        {
+                                            <span>Increase: <b>@FormatBytes(Math.Abs(_savedBytes))</b></span>
+                                        }
+                                    </div>
+
+                                    <div class="mt-3 d-flex gap-2 flex-wrap">
+                                        <button class="btn btn-primary"
+                                                @onclick="DownloadCompressed"
+                                                disabled="@_isBusy">
+                                            Download
+                                        </button>
+
+                                        <button class="btn btn-outline-secondary"
+                                                @onclick="ResetResult"
+                                                disabled="@_isBusy">
+                                            Compress another
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="stats-grid">
+                                <div class="stat">
+                                    <div class="stat-label">Original</div>
+                                    <div class="stat-value">@FormatBytes(_originalSizeBefore)</div>
+                                </div>
+                                <div class="stat">
+                                    <div class="stat-label">Compressed</div>
+                                    <div class="stat-value">@FormatBytes(_compressedSize)</div>
+                                </div>
+                                <div class="stat">
+                                    <div class="stat-label">Saved</div>
+                                    <div class="stat-value">
+                                        @if (_savedBytes >= 0)
+                                        {
+                                            @FormatBytes(_savedBytes)
+                                        }
+                                        else
+                                        {
+                                            @($"{FormatBytes(Math.Abs(_savedBytes))} (bigger)")
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="p-4 text-secondary">
+                            No preview needed for compression.
+                            <div class="small mt-2">
+                                Upload a PDF and click <b>Compress</b> — the compression stats will appear here.
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@code {
+    private byte[]? _pdfBytes;
+    private int _pageCount;
+    private bool _pdfLoaded;
+    private bool _isBusy;
+
+    private string _error = "";
+
+    // UI
+    private bool _dragOver;
+    private string? _fileName;
+
+    // Options
+    private bool _stats = false;
+
+    // Sizes / result
+    private long _originalSizeBefore;
+    private long _compressedSize;
+    private long _savedBytes;
+    private double _savedPercent;
+    private byte[]? _compressedBytes;
+
+    private void OnDragEnter(DragEventArgs e) => _dragOver = true;
+    private void OnDragOver(DragEventArgs e) => _dragOver = true;
+    private void OnDragLeave(DragEventArgs e) => _dragOver = false;
+    private void OnDrop(DragEventArgs e)
+    {
+        _dragOver = false;
+        StateHasChanged();
+    }
+
+    private async Task OnFileSelected(InputFileChangeEventArgs e)
+    {
+        _error = "";
+        _pdfLoaded = false;
+        _isBusy = false;
+
+        _pdfBytes = null;
+        _pageCount = 0;
+        _fileName = null;
+
+        ResetResult();
+
+        var file = e.File;
+        if (file is null) return;
+
+        try
+        {
+            _fileName = file.Name;
+
+            using var stream = file.OpenReadStream(maxAllowedSize: 50 * 1024 * 1024);
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+            _pdfBytes = ms.ToArray();
+
+            _originalSizeBefore = _pdfBytes.LongLength;
+
+            _pageCount = await Loader.GetValidatedPageCountAsync(_pdfBytes);
+            _pdfLoaded = true;
+        }
+        catch (Exception ex)
+        {
+            _error = $"Erreur chargement PDF : {ex.Message}";
+            _pdfLoaded = false;
+            _pdfBytes = null;
+            _pageCount = 0;
+        }
+    }
+
+    private async Task CompressOnly()
+    {
+        _error = "";
+
+        if (_pdfBytes is null || _pageCount <= 0)
+        {
+            _error = "Aucun PDF chargé.";
+            return;
+        }
+
+        _isBusy = true;
+        try
+        {
+            var options = new PDF_IT_Yourself.Interop.PdfInterop.CompressOptions
+            {
+                stats = _stats
+            };
+
+            _originalSizeBefore = _pdfBytes.LongLength;
+
+            var compressed = await CompressionPdf.CompressAsync(_pdfBytes, options);
+            _compressedBytes = compressed;
+
+            _compressedSize = compressed.LongLength;
+
+            _savedBytes = _originalSizeBefore - _compressedSize;
+            _savedPercent = _originalSizeBefore > 0 ? (_savedBytes * 100.0 / _originalSizeBefore) : 0;
+
+        }
+        catch (Exception ex)
+        {
+            _error = $"Erreur pendant la compression : {ex.Message}";
+        }
+        finally
+        {
+            _isBusy = false;
+        }
+    }
+
+    private async Task DownloadCompressed()
+    {
+        if (_compressedBytes is null) return;
+
+        var outName = string.IsNullOrWhiteSpace(_fileName)
+            ? "compressed.pdf"
+            : $"compressed_{_fileName}";
+
+        await JS.InvokeVoidAsync("PdfTools.downloadBytes", outName, _compressedBytes, "application/pdf");
+    }
+
+    private void ResetResult()
+    {
+        _compressedSize = 0;
+        _savedBytes = 0;
+        _savedPercent = 0;
+        _compressedBytes = null;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JS.InvokeVoidAsync("pdfDrop.wireDropZone", ".dropzone-compress", "pdfInputCompress");
+        }
+    }
+
+    private static string FormatBytes(long bytes)
+    {
+        if (bytes <= 0) return "0 B";
+        string[] units = { "B", "KB", "MB", "GB" };
+        double size = bytes;
+        int unit = 0;
+        while (size >= 1024 && unit < units.Length - 1)
+        {
+            size /= 1024;
+            unit++;
+        }
+        return $"{size:0.##} {units[unit]}";
+    }
+}

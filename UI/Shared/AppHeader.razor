@@ -1,0 +1,105 @@
+﻿@inject IJSRuntime JS
+<header class="border-bottom bg-white sticky-top shadow-sm">
+    <nav class="navbar navbar-expand-lg container-fluid px-4 px-lg-5 py-2">
+
+        <!-- Brand -->
+        <a class="navbar-brand d-flex align-items-center gap-2 fw-semibold" href="/">
+            <img src="/img/logo4a.png" alt="PDF IT Yourself" style="height:32px;margin-top:5px" />
+        </a>
+
+        <!-- Mobile toggle -->
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="mainNav">
+            <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-2">
+
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle fw-semibold" href="#" role="button"
+                       data-bs-toggle="dropdown" aria-expanded="false">
+                        Tools
+                    </a>
+
+                    <ul class="dropdown-menu dropdown-menu-end shadow border-0 p-2 tools-dropdown">
+
+                        <!-- Core -->
+                        <li><h6 class="dropdown-header text-uppercase small text-muted">Core</h6></li>
+                        <li><a class="dropdown-item" href="/merge">Merge PDFs</a></li>
+                        <li><a class="dropdown-item" href="/split">Split PDF</a></li>
+                        <li><a class="dropdown-item" href="/extract">Extract pages</a></li>
+                        <li><a class="dropdown-item" href="/delete">Delete pages</a></li>
+                        <li><a class="dropdown-item" href="/reorder">Reorder pages</a></li>
+                        <li><a class="dropdown-item" href="/compression">Compression</a></li>
+
+                        <li><hr class="dropdown-divider my-2" /></li>
+
+                        <!-- Edit -->
+                        <li><h6 class="dropdown-header text-uppercase small text-muted">Edit</h6></li>
+                        <li><a class="dropdown-item" href="/watermark">Add watermark</a></li>
+                        <li><a class="dropdown-item" href="/page-numbers">Page numbers</a></li>
+
+                        <li><hr class="dropdown-divider my-2" /></li>
+
+                        <!-- Images -->
+                        <li><h6 class="dropdown-header text-uppercase small text-muted">Images</h6></li>
+                        <li><a class="dropdown-item" href="/png-to-pdf">PNG → PDF</a></li>
+                    </ul>
+                </li>
+
+                <!-- FAQ -->
+                <li class="nav-item">
+                    <a class="nav-link fw-semibold" href="/faq">FAQ</a>
+                </li>
+
+                <!-- About -->
+                <li class="nav-item">
+                    <a class="nav-link fw-semibold" href="/about">About</a>
+                </li>
+
+                @if (CanInstall)
+                {
+                    <li class="nav-item ms-lg-3">
+                        <button type="button"
+                                class="btn btn-link nav-link p-0 d-flex align-items-center install-btn"
+                                @onclick="InstallApp"
+                                title="Use it offline"
+                                aria-label="Install app">
+                            <i class="bi bi-cloud-arrow-down fs-3"></i>
+                        </button>
+                    </li>
+                }
+                
+
+            </ul>
+        </div>
+    </nav>
+</header>
+
+@code {
+    private bool CanInstall;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        CanInstall = await JS.InvokeAsync<bool>("pwa.canInstall");
+        StateHasChanged();
+        await JS.InvokeVoidAsync("pwa.listenInstallAvailable",
+            DotNetObjectReference.Create(this));
+    }
+
+    [JSInvokable]
+    public async Task SetInstallAvailable()
+    {
+        CanInstall = await JS.InvokeAsync<bool>("pwa.canInstall");
+        StateHasChanged();
+    }
+
+    private async Task InstallApp()
+    {
+        await JS.InvokeVoidAsync("pwa.install");
+        CanInstall = await JS.InvokeAsync<bool>("pwa.canInstall");
+        StateHasChanged();
+    }
+}

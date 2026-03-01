@@ -75,6 +75,21 @@ namespace PDF_IT_Yourself.Services
             return _interop.AddPageNumbersAsync(pdfBytes, options);
         }
 
+        public Task<byte[]> CompressLosslessAsync(byte[] pdfBytes, PdfInterop.CompressOptions? options = null)
+        {
+            PdfDocumentLoader.ValidatePdfBytes(pdfBytes);
+            return _interop.CompressLosslessAsync(pdfBytes, options);
+        }
+
+        public Task<byte[]> ImageToPdfAsync(byte[] imageBytes, PdfInterop.ImageToPdfOptions? options = null)
+        {
+            if (imageBytes == null || imageBytes.Length == 0)
+                throw new Exception("Image vide.");
+
+            return _interop.ImageToPdfAsync(imageBytes, options);
+        }
+
+
         // -------------------------
         // Helpers
         // -------------------------
