@@ -30,7 +30,13 @@ jobs:
       - name: Publish Blazor
         run: dotnet publish PDF_IT_Yourself.csproj -c Release -o publish
 
-      # OIDC token for Static Web Apps
+      - name: Debug published files
+        run: |
+          echo "=== publish ==="
+          find publish -maxdepth 4 -type f | sort
+          echo "=== check manifest ==="
+          ls -l publish/wwwroot/manifest.webmanifest || echo "manifest missing"
+
       - name: Install OIDC Client from Core Package
         run: npm install @actions/core@1.6.0 @actions/http-client
 
@@ -48,7 +54,6 @@ jobs:
         with:
           action: "upload"
           app_location: "publish/wwwroot"
-          # IMPORTANT: on garde aussi l’api token comme avant
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_AMBITIOUS_ROCK_0C82AF610 }}
           github_id_token: ${{ steps.idtoken.outputs.result }}
 
