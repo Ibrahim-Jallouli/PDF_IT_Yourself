@@ -30,15 +30,6 @@ jobs:
       - name: Publish Blazor
         run: dotnet publish PDF_IT_Yourself.csproj -c Release -o publish
 
-      - name: Debug published files
-        run: |
-          echo "=== publish ==="
-          find publish -maxdepth 4 -type f | sort
-          echo "=== check index ==="
-          ls -l publish/wwwroot/index.html || echo "index missing"
-          echo "=== check manifest ==="
-          ls -l publish/wwwroot/manifest.json || echo "manifest missing"
-
       - name: Deploy
         uses: Azure/static-web-apps-deploy@v1
         with:
