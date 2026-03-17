@@ -2,10 +2,16 @@
 @using Microsoft.AspNetCore.Components.Forms
 @inject PDF_IT_Yourself.Tools.Merge.MergeTool MergeTool
 @inject IJSRuntime JS
+@inject NavigationManager Navigation
+
 <div class="app-bg">
 
     <div class="container py-4 ">
-        <div class="tool-header mb-4">
+        <div class="tool-header mb-4 d-flex align-items-center gap-3">
+            <button class="btn btn-light btn-sm d-inline-flex align-items-center gap-2 mb-3"
+                    @onclick="GoBack">
+                <i class="bi bi-arrow-left"></i>
+            </button>
             <div>
                 <h1 class="h3 fw-bold mb-1">Merge PDFs</h1>
                 <div class="text-secondary">Merge multiple PDFs in order — 100% local, no upload.</div>
@@ -287,5 +293,10 @@
         if (bytes < 1024 * 1024) return $"{bytes / 1024d:0.#} KB";
         if (bytes < 1024 * 1024 * 1024) return $"{bytes / (1024d * 1024d):0.#} MB";
         return $"{bytes / (1024d * 1024d * 1024d):0.#} GB";
+    }
+
+    void GoBack()
+    {
+        Navigation.NavigateTo(Navigation.BaseUri);
     }
 }

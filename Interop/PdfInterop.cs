@@ -83,6 +83,7 @@ namespace PDF_IT_Yourself.Interop
 
         public ValueTask DestroyPdfAsync(IJSObjectReference pdf,CancellationToken cancellationToken = default)
            => _js.InvokeVoidAsync("PdfTools.destroyPdf",cancellationToken, pdf);
+
         // -------------------------
         // DTOs sent to JS
         // -------------------------

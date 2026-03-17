@@ -1,10 +1,11 @@
 ﻿@inject IJSRuntime JS
+@inject NavigationManager Nav
 <header class="border-bottom bg-white sticky-top shadow-sm">
     <nav class="navbar navbar-expand-lg container-fluid px-4 px-lg-5 py-2">
 
         <!-- Brand -->
-        <a class="navbar-brand d-flex align-items-center gap-2 fw-semibold" href="/">
-            <img src="/img/logo4a.png" alt="PDF IT Yourself" style="height:32px;margin-top:5px" />
+        <a class="navbar-brand d-flex align-items-center gap-2 fw-semibold" href="@Nav.BaseUri">
+            <img src="img/logo4a.png" alt="PDF IT Yourself" style="height:32px;margin-top:5px" />
         </a>
 
         <!-- Mobile toggle -->
@@ -25,36 +26,36 @@
 
                         <!-- Core -->
                         <li><h6 class="dropdown-header text-uppercase small text-muted">Core</h6></li>
-                        <li><a class="dropdown-item" href="/merge">Merge PDFs</a></li>
-                        <li><a class="dropdown-item" href="/split">Split PDF</a></li>
-                        <li><a class="dropdown-item" href="/extract">Extract pages</a></li>
-                        <li><a class="dropdown-item" href="/delete">Delete pages</a></li>
-                        <li><a class="dropdown-item" href="/reorder">Reorder pages</a></li>
-                        <li><a class="dropdown-item" href="/compression">Compression</a></li>
+                        <li><a class="dropdown-item" href="merge">Merge PDFs</a></li>
+                        <li><a class="dropdown-item" href="split">Split PDF</a></li>
+                        <li><a class="dropdown-item" href="extract">Extract pages</a></li>
+                        <li><a class="dropdown-item" href="delete">Delete pages</a></li>
+                        <li><a class="dropdown-item" href="reorder">Reorder pages</a></li>
+                        <li><a class="dropdown-item" href="compression">Compression</a></li>
 
                         <li><hr class="dropdown-divider my-2" /></li>
 
                         <!-- Edit -->
                         <li><h6 class="dropdown-header text-uppercase small text-muted">Edit</h6></li>
-                        <li><a class="dropdown-item" href="/watermark">Add watermark</a></li>
-                        <li><a class="dropdown-item" href="/page-numbers">Page numbers</a></li>
+                        <li><a class="dropdown-item" href="watermark">Add watermark</a></li>
+                        <li><a class="dropdown-item" href="page-numbers">Page numbers</a></li>
 
                         <li><hr class="dropdown-divider my-2" /></li>
 
                         <!-- Images -->
                         <li><h6 class="dropdown-header text-uppercase small text-muted">Images</h6></li>
-                        <li><a class="dropdown-item" href="/png-to-pdf">PNG → PDF</a></li>
+                        <li><a class="dropdown-item" href="png-to-pdf">PNG → PDF</a></li>
                     </ul>
                 </li>
 
                 <!-- FAQ -->
                 <li class="nav-item">
-                    <a class="nav-link fw-semibold" href="/faq">FAQ</a>
+                    <a class="nav-link fw-semibold" href="faq">FAQ</a>
                 </li>
 
                 <!-- About -->
                 <li class="nav-item">
-                    <a class="nav-link fw-semibold" href="/about">About</a>
+                    <a class="nav-link fw-semibold" href="about">About</a>
                 </li>
 
                 @if (CanInstall)
